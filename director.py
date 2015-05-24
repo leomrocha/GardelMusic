@@ -13,7 +13,7 @@ import sys
 ####
 #import all the scenes
 import home_scene
-
+import play_scene
 ####
 
 
@@ -55,7 +55,9 @@ class Director:
         
         #Game Menu
         
-        #
+        #play scene
+        self.scenes["play"] = play_scene.PlayScene(self)
+        #Set start screen
         self.set_scene(self.start_scene)
 
     def display_fps(self):
@@ -96,20 +98,25 @@ class Director:
             self.scene.on_update()
 
             # dibuja la pantalla
-            self.scene.on_draw(self.screen)
+            #self.scene.on_draw(self.screen)
+            self.scene.on_draw()
             
             self.display_fps()
             pygame.display.flip()
 
     def _set_scene(self, scene):
         "Changes the current scene to the one given by OBJECT"
+        #print "setting scene"
         self.scene = scene
+        #marks the scene as dirty for the scene to force the update
+        self.scene.dirty = True
 
     def set_scene(self, scene_name):
         """
         sets the new scene to the given name
         """
         if scene_name in self.scenes:
+            #print scene_name, self.scenes[scene_name]
             self._set_scene(self.scenes[scene_name])
         else:
             ##TODO make a log here

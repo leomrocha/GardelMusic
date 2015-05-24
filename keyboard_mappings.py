@@ -7,7 +7,7 @@ name id (number),
 color(white|black) ,
 associated synesthesia color id, 
 pos (x, y)
-dimension (width, height)
+size (width, height)
 
 """
 
@@ -111,15 +111,15 @@ ref_keyboard_padding = {
 }
 
 
-#key dimensions, IDEM previous dict, dimensions are in pixels in plain_keybord.svg file
+#key size, IDEM previous dict, size are in pixels in plain_keybord.svg file
 #all key proportions be calculated according to these figures
-ref_key_dimensions = {
+ref_key_size = {
     'white': (20,100),
     'black': (15,60),
 }
 
 
-##Reference keyboard dimensions
+##Reference keyboard size
 ref_width = 1060
 ref_height = 120
 
@@ -133,7 +133,7 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
     
     generates the keyboard map 
     
-    Al dimension recalculations are done based on the given width and are proportional to the base image
+    Al size recalculations are done based on the given width and are proportional to the base image
     
     key_range = (initial, end) -- WARNING, the first and last key MUST be white or the generation WILL FAIL
     synesthesia_colors = array with RGB colors of every midi_id
@@ -153,12 +153,12 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
             'color': white|black,
             'synesthesia': color in the synesthesia scheme
             'pos': position relative to the bottom left corner
-            'dimension': dimension of the key
+            'size': size of the key
         }
     """
     keyboard_map = []
     
-    #dimension recalculation
+    #size recalculation
     
     #TODO verify that the first and last keys are white or change it by force (eliminate)
         
@@ -173,7 +173,7 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
     avail_w = width - padding_left - padding_right  #available width
     avail_h = height - padding_top - padding_bottom  #available height
     
-    #keys dimensions recalculations:
+    #keys size recalculations:
     #need to count white keys
     total_whites = 0
     #this is not so efficient as we do it twice
@@ -181,15 +181,15 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
         if get_key_color(i%12) == 'white':
             total_whites +=1
     
-    #key dimensions by color
+    #key size by color
     white_width = avail_w / total_whites
-    white_height = ref_key_dimensions['white'][0] * white_width/ ref_key_dimensions['white'][1]
+    white_height = ref_key_size['white'][0] * white_width/ ref_key_size['white'][1]
     #cap height
     white_height = max(white_height, height)
     white_dim = (white_width, white_height)
     
     black_width = white_width * 3 / 4
-    black_height = ref_key_dimensions['black'][0] * black_width/ ref_key_dimensions['black'][1]
+    black_height = ref_key_size['black'][0] * black_width/ ref_key_size['black'][1]
     #cap height
     black_height = max(black_height, height)
     black_dim = (black_width, black_height)
@@ -224,7 +224,7 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
                 'color': key_color,
                 'synesthesia': synesthesia_colors[i],
                 'pos': pos,
-                'dimension': dim
+                'size': dim
             }
         last_key_pos = pos
         
@@ -237,9 +237,6 @@ def get_key_at(pos):
     returns the midi_id of the key at the given position (intersection)
     this function is to avoid checking for a click event to all the keys 
     """
-    
-    
-#keyboard_map contains
-keyboard_map = {
-
-}
+    #TODO
+    pass
+        

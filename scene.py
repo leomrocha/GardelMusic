@@ -13,7 +13,10 @@ class Scene(object):
     derivado de esta clase para crear una escena utilizable."""
 
     def __init__(self, director):
+        """
+        """
         self.director = director
+        self.dirty = True
 
     def on_update(self):
         "Actualización lógica que se llama automáticamente desde el director."
