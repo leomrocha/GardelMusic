@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+import os
 
 import pygame
 
@@ -19,9 +20,9 @@ class HomeScene(Scene):
 
         #Start Image
         #TODO make sure that all the images are the same size (by code)
-        self.play_normal = pygame.image.load("assets/images/icons/ic_play_circle_big_normal_o.png").convert_alpha()
-        self.play_over = pygame.image.load("assets/images/icons/ic_play_circle_normal_o.png").convert_alpha()
-        self.play_pressed = pygame.image.load("assets/images/icons/ic_play_circle_pressed_o.png").convert_alpha()
+        self.play_normal = pygame.image.load(os.path.join("assets","images","icons","ic_play_circle_big_normal_o.png")).convert_alpha()
+        self.play_over = pygame.image.load(os.path.join("assets","images","icons","ic_play_circle_normal_o.png")).convert_alpha()
+        self.play_pressed = pygame.image.load(os.path.join("assets","images","icons","ic_play_circle_pressed_o.png")).convert_alpha()
         #bx, by, bw,bh = rect = self.play_normal.get_rect() 
         
         bx, by, bw,bh = self.play_rect = self.play_normal.get_rect() 
