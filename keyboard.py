@@ -49,7 +49,7 @@ class Keyboard(pygame.sprite.Group):
         super(Keyboard, self).__init__()
         #pygame.sprite.Sprite.__init__(self)
         #
-        self.kb_sprite = KeyboardSprite([0,450])
+        self.kb_sprite = KeyboardSprite([0,400])
         self.add(self.kb_sprite)
     
     def update(self):
