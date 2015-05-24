@@ -5,7 +5,6 @@ Keyboard Widget
 import pygame
 
 import keyboard_mappings
-from synesthesia import color_map
 
 class KeySprite(pygame.sprite.Sprite):
     """

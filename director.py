@@ -59,6 +59,10 @@ class Director:
         self.set_scene(self.start_scene)
 
     def display_fps(self):
+        #TODO refactor and create a widget that does this and can be added by a configuration variable
+        """
+        FPS display
+        """
         #TODO add timer for updating only ever X ms and not in every frame
         font=pygame.font.Font(None,20)
         try:
