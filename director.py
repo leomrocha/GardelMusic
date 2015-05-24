@@ -71,9 +71,10 @@ class Director:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
 			            self.quit()
-
+	            #scene event handling (has to be here because loop over events empties the queue
+                self.scene.on_event(event)
             # detecta eventos
-            self.scene.on_event()
+            #self.scene.on_event()
 
             # actualiza la escena
             self.scene.on_update()
