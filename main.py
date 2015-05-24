@@ -8,7 +8,10 @@ from pygame.locals import *
 from keyboard import *
 
 pygame.init()
-screen = pygame.display.set_mode((1060, 800), RESIZABLE)
+
+pygame.display.set_caption("Piano Challenge")
+
+screen = pygame.display.set_mode((1600, 900), RESIZABLE)
 
 clock = pygame.time.Clock() # create a clock object for timing
 
