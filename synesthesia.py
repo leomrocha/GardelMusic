@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-This file contains hardcoded the midi id, associated color, position and dimention of every keyboard key
+This file deals with synesthesia coloring of different
 
 
 """
@@ -279,6 +280,7 @@ color_map = {
 
 import colorsys
 
+
 def get_color(midi_id, color_theme='Isaac Newton (1704)'):
     """
     returns the color in RGB for the given midi_id
@@ -297,6 +299,7 @@ def get_color(midi_id, color_theme='Isaac Newton (1704)'):
         h,s,v = color
         color = colorsys.hsv_to_rgb(h, s/100., v/100.)
     return color
+    
     
 def get_all_colors(color_theme='Isaac Newton (1704)'):
     """
@@ -321,6 +324,7 @@ default_colors = get_all_colors(default_color_theme_name)
 #current color schemes, ihn RGB
 current_color_theme_name = default_color_theme_name
 current_colors = default_colors
+
 
 def set_color_theme(theme_name):
     """

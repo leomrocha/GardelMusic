@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 This file contains :
 midi id, number id, name id (number), associated color id, x, y, width, height

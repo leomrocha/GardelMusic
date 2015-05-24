@@ -1,0 +1,102 @@
+# -*- encoding: utf-8 -*-
+
+"""
+Game Director class for handling Scenes and Scene class
+Original version taken from: http://razonartificial.com/2010/08/gestionando-escenas-con-pygame/
+
+Modifications according to need
+"""
+
+import pygame
+import sys
+
+####
+#import all the scenes
+import home_scene
+
+####
+
+
+class Director:
+    """Representa el objeto principal del juego.
+
+    El objeto Director mantiene en funcionamiento el juego, se
+    encarga de actualizar, dibuja y propagar eventos.
+
+    Tiene que utilizar este objeto en conjunto con objetos
+    derivados de Scene."""
+
+    screen = pygame.display.set_mode((1600, 900))
+    #dictionary containing all the scenes
+    scenes = {}
+    
+    
+    def __init__(self, start_scene="home_scene"):
+        #self.screen = pygame.display.set_mode((1600, 900), RESIZABLE)
+        #self.screen = pygame.display.set_mode((1600, 900))
+
+        pygame.display.set_caption("Piano Challenge")
+
+        clock = pygame.time.Clock() # create a clock object for timing
+        self.start_scene = start_scene
+        self.scene = None
+        self.quit_flag = False
+        self.clock = pygame.time.Clock()
+        
+        self.setup_scenes()
+        
+    def setup_scenes(self):
+        """
+        setups the main scenes that might be needed, at least the start one
+        """
+        #Home scene
+        self.scenes["home_scene"] = home_scene.HomeScene(self)
+        #Settings
+        
+        #Game Menu
+        
+        #
+        self.set_scene(self.start_scene)
+
+    def loop(self):
+        "Pone en funcionamiento el juego."
+
+        while not self.quit_flag:
+            time = self.clock.tick(200)
+            
+            # Eventos de Salida
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+			            self.quit()
+
+            # detecta eventos
+            self.scene.on_event()
+
+            # actualiza la escena
+            self.scene.on_update()
+
+            # dibuja la pantalla
+            self.scene.on_draw(self.screen)
+            pygame.display.flip()
+
+    def _set_scene(self, scene):
+        "Changes the current scene to the one given by OBJECT"
+        self.scene = scene
+
+    def set_scene(self, scene_name):
+        """
+        sets the new scene to the given name
+        """
+        if scene_name in self.scenes:
+            self._set_scene(self.scenes[scene_name])
+        else:
+            ##TODO make a log here
+            print "Scene '%s' not found, could not be changed" % scene_name
+
+    def quit(self):
+        self.quit_flag = True
+
+

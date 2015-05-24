@@ -1,25 +1,19 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import sys
 
 import pygame
-from pygame.locals import *
 
-from keyboard import *
+import director
 
-pygame.init()
-
-pygame.display.set_caption("Piano Challenge")
-
-screen = pygame.display.set_mode((1600, 900), RESIZABLE)
-
-clock = pygame.time.Clock() # create a clock object for timing
+#pygame.display.set_caption("Piano Challenge")
 
 def setup():
     """
     sets up many things needed previous the game starting
     """
-    pass
+    pygame.init()
 
 
 def teardown():
@@ -35,31 +29,12 @@ def process_event(event):
     """
     pass
     
-    
 def main():
+    dir = director.Director()
     
-    done = False
-    
-    #######################
-    keyboard = Keyboard()
-    
-    #######################
-    while not done:
-        #process events
-        for event in pygame.event.get():
-            #check if finish
-            if event.type == pygame.QUIT:
-                        done = True
-            #
-            process_event(event)
-            
-        keyboard.update()
-        keyboard.draw(screen)
-        
-        
-        pygame.display.flip()
-        clock.tick(120)
-    
+    #dir.change_scene_by_name("home_scene"), not needed now that the scenes are managed by name and there is an initial scene
+    dir.loop()
+
 
 if __name__=="__main__":
     setup()
