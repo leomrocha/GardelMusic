@@ -1,7 +1,11 @@
 # -*- encoding: utf-8 -*-
 
+"""
+Scene base class
+Original version taken from: http://razonartificial.com/2010/08/gestionando-escenas-con-pygame/
 
-class Scene:
+"""
+class Scene(object):
     """Representa un escena abstracta del videojuego.
 
     Una escena es una parte visible del juego, como una pantalla

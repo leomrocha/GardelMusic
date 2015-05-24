@@ -78,7 +78,8 @@ class HomeScene(Scene):
             screen = self.screen
         if self.dirty:
             #print "drawing screen"
-            self.screen.fill((120,200,230))
+            #self.screen.fill((120,200,230))
+            self.screen.fill((255, 255, 240))
             bx, by, bw,bh = rect = self.play_normal.get_rect() 
             self.button_rect = (self.w/2 - bw/2, self.h/2 - bh/2)
             screen.blit(self.current_play_button, (self.w/2 - bw/2, self.h/2 - bh/2))

@@ -58,6 +58,18 @@ class Director:
         #
         self.set_scene(self.start_scene)
 
+    def display_fps(self):
+        #TODO add timer for updating only ever X ms and not in every frame
+        font=pygame.font.Font(None,20)
+        try:
+            self.fps_txt.fill((255,255,240))
+            self.screen.blit(self.fps_txt, (10, 10))
+        except:
+            pass
+        self.fps_txt=font.render("FPS:"+str(int(self.clock.get_fps())), 1,(100,100,100))
+        
+        self.screen.blit(self.fps_txt, (10, 10))
+
     def loop(self):
         "Pone en funcionamiento el juego."
 
@@ -81,6 +93,8 @@ class Director:
 
             # dibuja la pantalla
             self.scene.on_draw(self.screen)
+            
+            self.display_fps()
             pygame.display.flip()
 
     def _set_scene(self, scene):
