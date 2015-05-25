@@ -18,7 +18,7 @@ class KeySprite(pygame.sprite.DirtySprite):
     """
     Key sprite that
     """
-    def __init__(self, midi_id, pos, size, color, name, synesthesia=(100,100,100)):
+    def __init__(self, midi_id, pos, size, color, synesthesia=(100,100,100)):
         """
         midi_id = midi_id of the represented key
         pos = position
@@ -48,7 +48,7 @@ class KeySprite(pygame.sprite.DirtySprite):
         self.key_color = color
         self.pos = pos
         self.size = size
-        self.name = name
+        #self.name = name
         self.synesthesia = synesthesia
         #if key is black
         if color == 'black':
@@ -62,6 +62,7 @@ class KeySprite(pygame.sprite.DirtySprite):
         #current image index
         self.image_index = 0
         
+        #print synesthesia
         
         
         self.rect = pygame.Rect(self.image.get_rect())
@@ -72,8 +73,8 @@ class KeySprite(pygame.sprite.DirtySprite):
         self.images.append(self.pressed_image)
         
         #update key position
-        self.x = pos[0]
-        self.y = pos[1]
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
         
         #key state ('rest' | 'pressed')
         self.state = 'rest'
@@ -113,7 +114,7 @@ class KeySprite(pygame.sprite.DirtySprite):
     def on_update(self):
         """
         """
-        print "calling on_update", self.image_index
+        #print "calling on_update", self.image_index
         self.image = self.images[self.image_index]
         
         
@@ -121,16 +122,16 @@ class KeySprite(pygame.sprite.DirtySprite):
         """
         """
         if self.rect.collidepoint(pygame.mouse.get_pos()):
-            print "mouse over"
+            #print "mouse over"
             if event.type == pygame.MOUSEBUTTONDOWN:
-                print "mouse button pressed"
-                self.image_index = 1
+                #print "mouse button pressed"
+                self.on_key_press()
             if event.type == pygame.MOUSEBUTTONUP:
-                print "mouse button released"
-                self.image_index = 0
+                #print "mouse button released"
+                self.on_key_release()
                 
         elif self.image_index != 0:
-            self.image_index = 0
+            self.on_key_release()
         
         self.on_update()
         
@@ -210,31 +211,128 @@ class KeyboardSprite(pygame.sprite.Sprite):
         pass
         
 
-class Keyboard(pygame.sprite.Group):
+class Keyboard(object):
     """
     """
-    def __init__(self, pos=(0,0), width=1060):
+    def __init__(self, screen, pos=(0,0), width=1060):
         """
         """
         #Super constructor
         #super().__init__()
-        super(Keyboard, self).__init__()
+        #super(Keyboard, self).__init__()
         #pygame.sprite.Sprite.__init__(self)
         #
-        self.kb_sprite = KeyboardSprite([0,400])
-        self.add(self.kb_sprite)
+        #self.kb_sprite = KeyboardSprite([0,400])
+        #self.add(self.kb_sprite)
         
-        #Active Key Images (colors only)
+        self.screen  = screen
+        
+        
+        #self.screen.blit(self.background, pos)
+        
+        #define sprite groups
+        
+        self.white_keys_group = pygame.sprite.Group()
+        self.black_keys_group = pygame.sprite.Group()
+        # LayeredUpdates instead of group to draw in correct order
+        self.allkeys = pygame.sprite.LayeredUpdates() # more sophisticated than simple group
+        #self.allgroups = pygame.sprite.LayeredUpdates() # more sophisticated than simple group
+        self.allgroups = pygame.sprite.Group()
+        
+        KeySprite.groups = self.allkeys, self.allgroups
+        #TODO layers
+        #Active Key Images (colors only) layer
         #TODO
         
-        #Active Finger Images (numbers 1-5)
+        #Active Finger Images (numbers 1-5) layer
         #TODO
         
-        #Arrows showing next key to press
+        #Arrows showing next key to press layer
         #TODO
+        self.keys = []
+        self._setup_keys(pos, width)
     
-    def update(self):
-        super(Keyboard, self).update()
+    def _setup_keys(self, pos, width):
+        """
+        """
+        #obtain 
+        keyboard_map = keyboard_mappings.generate_keyboard_map(key_range=(21,108),width=width)
+        key_map = keyboard_map['keyboard_map']
+        kb_width, kb_height = keyboard_map['size']
+        padding = keyboard_map['padding']
+        self.kb_background = pygame.Surface((kb_width, kb_height))
+        self.kb_background.fill((26,26,26))     # fill white
+        self.kb_background = self.kb_background.convert()  # jpg can not have transparency
+        
+        self.keys = []
+        
+        for k in key_map:
+        
+            key_pos = k['pos']
+            key_size = k['size']
+            #key_pos = (pos[0] + key_pos[0], pos[1] - kb_height )
+            #key_pos = (pos[0] + key_pos[0], pos[1] + key_pos[1])
+            key_pos = (pos[0] + key_pos[0], pos[1] + padding['top'])
+            
+            key_color = k['color']
+            
+            ks = KeySprite(midi_id=k['midi_id'], pos=key_pos , size=key_size , 
+                           color=key_color , synesthesia=k['synesthesia'] )
+            self.keys.append(ks)
+            if k['color'] == 'black':
+                self.black_keys_group.add(ks)
+            else:
+                self.white_keys_group.add(ks)
+                #background
+
+        self.background = pygame.sprite.Sprite()
+        self.background.image = pygame.Surface((kb_width, kb_height))
+        self.background.image.fill((26,26,26))     # fill white
+        self.background.rect = self.background.image.get_rect()
+        self.background.rect.x = pos[0]
+        self.background.rect.y = pos[1]
+        self.allgroups.add(self.background)
+        
+    
+    def on_update(self):
+        #super(Keyboard, self).update()
+        pass
+    
+    def on_draw(self, screen):
+        self.allgroups.clear(screen, self.background.image)
+        self.allgroups.update()
+        self.allgroups.draw(screen)
+        
+        self.white_keys_group.clear(screen, self.kb_background)
+        self.white_keys_group.update()
+        self.white_keys_group.draw(screen)
+        
+        self.black_keys_group.clear(screen, self.kb_background)
+        self.black_keys_group.update()
+        self.black_keys_group.draw(screen)
+
+        
+        #self.allkeys.draw(screen)
+        #self.allgroups.draw(screen)
+        pass
+        
+    def on_event(self, event):
+    
+        #TODO make this efficient
+        collitions = []
+        for k in self.keys:
+            if k.rect.collidepoint(pygame.mouse.get_pos()):
+                collitions.append(k)
+        #there should be only 2 collitions max (one white and one black)
+        assert(len(collitions) >=0 and len(collitions) <=2)
+        #if more than one collition, only activate the black key
+        if len(collitions) > 1:
+            for k in collitions:
+                if k.key_color == 'black':
+                    k.on_event(event)
+        else:
+            for k in collitions:
+                k.on_event(event)
         
     def on_mouse_down(self, pos):
         """

@@ -145,7 +145,14 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
     given positions are RELATIVE to the bottom left corner, to correctly possition them on screen 
     
     
-    returns: an array containing secuentially all the informations about all the keys in the keyboard:
+    returns: 
+        ret = {
+        'keyboard_map': keyboard_map,
+        'padding': {left, right, top, bottom, bottom_black }, 
+        'size': (w,h)
+        'key_size': {'white':(w,h), 'black':(w,h), }
+    }
+    Where keyboard_map is an array containing secuentially all the informations about all the keys in the keyboard:
          {
             'midi_id': i,
             'key_id': 0-11,
@@ -155,6 +162,7 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
             'pos': position relative to the bottom left corner
             'size': size of the key
         }
+        and information about this keyboard
     """
     keyboard_map = []
     
@@ -176,22 +184,28 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
     #keys size recalculations:
     #need to count white keys
     total_whites = 0
+    total_blacks = 0
     #this is not so efficient as we do it twice
     for i in range(key_range[0],key_range[1]+1):
         if get_key_color(i%12) == 'white':
             total_whites +=1
+        else:
+            total_blacks +=1
     
     #key size by color
     white_width = avail_w / total_whites
-    white_height = ref_key_size['white'][0] * white_width/ ref_key_size['white'][1]
+    white_height = ref_key_size['white'][1] * white_width / ref_key_size['white'][0]
     #cap height
-    white_height = max(white_height, max_height)
+    #print white_height, height, max_height
+    #print avail_w
+    #print total_whites, total_blacks
+    white_height = min(white_height, max_height)
     white_dim = (white_width, white_height)
     
     black_width = white_width * 3 / 4
-    black_height = ref_key_size['black'][0] * black_width/ ref_key_size['black'][1]
+    black_height = ref_key_size['black'][1] * black_width/ ref_key_size['black'][0]
     #cap height
-    black_height = max(black_height, max_height)
+    black_height = min(black_height, max_height)
     black_dim = (black_width, black_height)
     
     #keep track of the state of things to be able to create a nice keybard
@@ -205,7 +219,7 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
         
         key_color = get_key_color(i%12)
         if key_color == 'black':
-            x = last_key_pos[0] - black_width/2
+            x = last_key_pos[0] + white_width - black_width/2
             y = padding_bottom_black
         else:
             x = last_key_pos[0] + white_width
@@ -216,7 +230,8 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
         dim = white_dim
         if key_color == 'black':
             dim = black_dim
-        
+        else:
+            last_key_pos = pos
         key = {
                 'midi_id': i,
                 'key_id': get_key_id(i),
@@ -226,11 +241,37 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
                 'pos': pos,
                 'size': dim
             }
-        last_key_pos = pos
+        
         
         keyboard_map.append(key)
+    
+    #now create all the other reference dimension containers to return:
         
-    return keyboard_map
+    padding = {
+        'left': padding_left,
+        'right': padding_right,
+        'top': padding_top,
+        'bottom': padding_bottom,
+        'bottom_black': padding_bottom_black,
+        }
+    size = (width, height)
+    key_size = {
+        'white': (white_width, white_height),
+        'black': (black_width, black_height),
+    }
+    
+    #print keyboard_map
+    #print size
+    #print key_size
+    #print padding
+    
+    ret = {
+        'keyboard_map': keyboard_map,
+        'padding': padding,
+        'size': size,
+        'key_size': key_size
+    }
+    return ret
     
 def get_key_at(pos):
     """

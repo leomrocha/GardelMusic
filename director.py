@@ -26,7 +26,7 @@ class Director:
     Tiene que utilizar este objeto en conjunto con objetos
     derivados de Scene."""
 
-    screen = pygame.display.set_mode((1600, 900))
+    screen = pygame.display.set_mode((1900, 1000))
     #dictionary containing all the scenes
     scenes = {}
     
@@ -80,7 +80,7 @@ class Director:
         "Pone en funcionamiento el juego."
 
         while not self.quit_flag:
-            time = self.clock.tick(200)
+            time = self.clock.tick(100)
             
             # Eventos de Salida
             for event in pygame.event.get():

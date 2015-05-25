@@ -281,7 +281,12 @@ color_map = {
 import colorsys
 
 
-def get_color(midi_id, color_theme='Isaac Newton (1704)'):
+def reformat_color(color):
+    return int (round (color[0] * 255)), \
+           int (round (color[1] * 255)), \
+           int (round (color[2] * 255))
+
+def get_color(midi_id, color_theme='Steve Zieverink (2004)'):
     """
     returns the color in RGB for the given midi_id
     will fail
@@ -289,23 +294,30 @@ def get_color(midi_id, color_theme='Isaac Newton (1704)'):
     color_id  = midi_id % 12
     #get color map
     theme = color_map[color_theme]
+    
     convert = False
     
-    if  'format' in theme and theme['format'] == 'HSV':
-        convert = True
-    
     color = theme[color_id]
-    if convert:
+    #print "this color: ", color    
+    if  'format' in theme and theme['format'] == 'HSV':
         h,s,v = color
-        color = colorsys.hsv_to_rgb(h, s/100., v/100.)
+        color = colorsys.hsv_to_rgb(h/255., s/100., v/100.)
+        color = reformat_color(color)
+    elif  'format' in theme and theme['format'] == 'HSL':
+        h,s,l = color
+        color = colorsys.hls_to_rgb(h/255., l/100., s/100.)
+        color = reformat_color(color)
+    #print "converted color: ", color    
+
     return color
     
     
-def get_all_colors(color_theme='Isaac Newton (1704)'):
+def get_all_colors(color_theme='Steve Zieverink (2004)'):
     """
     returns an array of length 128 with the colors for every position (in RGB)
     this function is not efficient, but it will do the job and in any case, should be called only once when the synesthesia theme is changed
     """
+    #print "getting all colors now"
     colors = []
     for i in range(128):
         c = get_color(i, color_theme)
@@ -317,7 +329,7 @@ def get_all_colors(color_theme='Isaac Newton (1704)'):
 #Define a default synesthesia schema in RGB
 ###
 
-
+#print "setting up colors"
 default_color_theme_name = 'Steve Zieverink (2004)'
 default_colors = get_all_colors(default_color_theme_name)
 
