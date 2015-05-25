@@ -16,6 +16,8 @@ import home_scene
 import play_scene
 ####
 
+###Setup screen size automagically
+import pygame.display
 
 class Director:
     """Representa el objeto principal del juego.
@@ -25,15 +27,26 @@ class Director:
 
     Tiene que utilizar este objeto en conjunto con objetos
     derivados de Scene."""
+    scene_width, scene_height = None, None
 
-    screen = pygame.display.set_mode((1900, 1000))
+    screen = None
     #dictionary containing all the scenes
     scenes = {}
     
     
     def __init__(self, start_scene="home_scene"):
+
+        #Setup video system
+        display_info = pygame.display.Info()
+        self.scene_width, self.scene_height = display_info.current_w, display_info.current_h
+
+        #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height))
+        self.screen = pygame.display.set_mode((self.scene_width * 9/10, self.scene_height * 9/10))
+
         #self.screen = pygame.display.set_mode((1600, 900), RESIZABLE)
         #self.screen = pygame.display.set_mode((1600, 900))
+
+
 
         pygame.display.set_caption("Piano Challenge")
 
