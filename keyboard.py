@@ -18,7 +18,7 @@ class KeySprite(pygame.sprite.DirtySprite):
     """
     Key sprite that
     """
-    def __init__(self, midi_id, pos, size, color, synesthesia=(100,100,100)):
+    def __init__(self, midi_id, pos, size, color, name, synesthesia=(100,100,100)):
         """
         midi_id = midi_id of the represented key
         pos = position
@@ -48,8 +48,8 @@ class KeySprite(pygame.sprite.DirtySprite):
         self.key_color = color
         self.pos = pos
         self.size = size
+        self.name = name
         self.synesthesia = synesthesia
-        #TODO make this efficient (for the moment will load a copy o the image for every key)
         #if key is black
         if color == 'black':
             self.image = black_key_image = pygame.transform.scale(black_key_image, size)
@@ -62,13 +62,14 @@ class KeySprite(pygame.sprite.DirtySprite):
         #current image index
         self.image_index = 0
         
-        self.rect = pygame.Rect(self.image.get_rect())
-        print self.rect, self.rect.width, self.rect.height
-        #create and append the pressed image with the same size as the background image
-        pressed_image = pygame.Surface((self.rect.width, self.rect.height))
-        pressed_image.fill(self.synesthesia)
         
-        self.images.append(pressed_image)
+        
+        self.rect = pygame.Rect(self.image.get_rect())
+        #create and append the pressed image with the same size as the background image
+        self.pressed_image = pygame.Surface([self.rect.width, self.rect.height])
+        self.pressed_image.fill(self.synesthesia)
+        
+        self.images.append(self.pressed_image)
         
         #update key position
         self.x = pos[0]
@@ -112,13 +113,26 @@ class KeySprite(pygame.sprite.DirtySprite):
     def on_update(self):
         """
         """
+        print "calling on_update", self.image_index
         self.image = self.images[self.image_index]
-        pass
+        
         
     def on_event(self, event=None):
         """
         """
-        pass
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            print "mouse over"
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                print "mouse button pressed"
+                self.image_index = 1
+            if event.type == pygame.MOUSEBUTTONUP:
+                print "mouse button released"
+                self.image_index = 0
+                
+        elif self.image_index != 0:
+            self.image_index = 0
+        
+        self.on_update()
         
     def on_draw(self):
         """
@@ -126,8 +140,9 @@ class KeySprite(pygame.sprite.DirtySprite):
         pass
         
 
-class WhiteKeyGroup(pygame.sprite.Group):
+class KeyGroup(pygame.sprite.Group):
     """
+    Contains the key and other elements for the interactivity
     """
     #TODO
     pass
@@ -194,13 +209,11 @@ class KeyboardSprite(pygame.sprite.Sprite):
         
         pass
         
-        
-        
 
 class Keyboard(pygame.sprite.Group):
     """
     """
-    def __init__(self, pos=(0,0)):
+    def __init__(self, pos=(0,0), width=1060):
         """
         """
         #Super constructor

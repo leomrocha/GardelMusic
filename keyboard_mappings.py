@@ -128,7 +128,7 @@ keyboard_range=(21,95)
 
 #def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.current_colors, width=1060, height=120, padding=(10,10,12.5,7.5)):
 #def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.current_colors, width=1060, height=120):
-def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.current_colors, width=1060, height=120):
+def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.current_colors, width=1060, max_height=300):
     """
     
     generates the keyboard map 
@@ -137,8 +137,8 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
     
     key_range = (initial, end) -- WARNING, the first and last key MUST be white or the generation WILL FAIL
     synesthesia_colors = array with RGB colors of every midi_id
-    width
-    height  -> height is the MAX height that will be allowed on the keyboard
+    width = of the keyboard
+    max_height  -> height is the MAX height that will be allowed on the keyboard
     ##padding = (left, right, top, bottom)   -> not implemented yet
     
     WARNING
@@ -185,13 +185,13 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
     white_width = avail_w / total_whites
     white_height = ref_key_size['white'][0] * white_width/ ref_key_size['white'][1]
     #cap height
-    white_height = max(white_height, height)
+    white_height = max(white_height, max_height)
     white_dim = (white_width, white_height)
     
     black_width = white_width * 3 / 4
     black_height = ref_key_size['black'][0] * black_width/ ref_key_size['black'][1]
     #cap height
-    black_height = max(black_height, height)
+    black_height = max(black_height, max_height)
     black_dim = (black_width, black_height)
     
     #keep track of the state of things to be able to create a nice keybard

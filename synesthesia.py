@@ -318,7 +318,7 @@ def get_all_colors(color_theme='Isaac Newton (1704)'):
 ###
 
 
-default_color_theme_name = 'Isaac Newton (1704)'
+default_color_theme_name = 'Steve Zieverink (2004)'
 default_colors = get_all_colors(default_color_theme_name)
 
 #current color schemes, ihn RGB
