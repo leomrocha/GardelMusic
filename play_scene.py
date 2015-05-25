@@ -41,6 +41,7 @@ class PlayScene(object):
     def on_update(self):
         """
         """
+        self.midi_pubsub.poll()
         self.instrument.on_draw(self.screen)
         pass
         
@@ -80,9 +81,12 @@ class PlayScene(object):
     def _draw_display(self):
         """
         Music display, this are 2 overlayed displays:
-            - the one for the user to read
+            - the one for the user to read:
+                - left hand display
+                - right hand display
             - the one that shows the user feedback of what is he/she doing
         """
+        #TODO
         pass
         
     def _draw_instrument(self):

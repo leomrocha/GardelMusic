@@ -38,6 +38,8 @@ class HomeScene(Scene):
                 
        
     def on_update(self):
+        """
+        """
         if self.dirty:
             self.on_draw()
         self.dirty = False

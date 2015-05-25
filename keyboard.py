@@ -95,7 +95,6 @@ class KeySprite(pygame.sprite.DirtySprite):
         """
         when the key is pressed by the user on the screen
         """
-        #TODO emit note off midi event
         self.midi_publish("note_off", self.midi_id)
         self.on_note_off()
         
@@ -112,8 +111,6 @@ class KeySprite(pygame.sprite.DirtySprite):
     def on_note_off(self):
         """
         """
-        #TODO erase all the overlay
-        #TODO reset to the original image
         self.state = 'rest'
         self.image_index = 0
 
@@ -223,13 +220,6 @@ class Keyboard(object):
     def __init__(self, screen, midi_pubsub, pos=(0,0), width=1060):
         """
         """
-        #Super constructor
-        #super().__init__()
-        #super(Keyboard, self).__init__()
-        #pygame.sprite.Sprite.__init__(self)
-        #
-        #self.kb_sprite = KeyboardSprite([0,400])
-        #self.add(self.kb_sprite)
         
         self.screen  = screen
         
@@ -238,6 +228,8 @@ class Keyboard(object):
         
         midi_pubsub.subscribe("note_on", self.on_note_on)
         midi_pubsub.subscribe("note_off", self.on_note_off)
+        midi_pubsub.subscribe("sustain", self.on_sustain)
+        
         
         ###end MIDI
         #self.screen.blit(self.background, pos)
@@ -247,21 +239,10 @@ class Keyboard(object):
         self.white_keys_group = pygame.sprite.Group()
         self.black_keys_group = pygame.sprite.Group()
         # LayeredUpdates instead of group to draw in correct order
-        #self.allkeys = pygame.sprite.LayeredUpdates() # more sophisticated than simple group
-        #self.allgroups = pygame.sprite.LayeredUpdates() # more sophisticated than simple group
         self.allgroups = pygame.sprite.Group()
         
         #KeySprite.groups = self.allkeys, self.allgroups
         KeySprite.groups = self.allgroups
-        #TODO layers
-        #Active Key Images (colors only) layer
-        #TODO
-        
-        #Active Finger Images (numbers 1-5) layer
-        #TODO
-        
-        #Arrows showing next key to press layer
-        #TODO
         self.keys = []
         self._setup_keys(pos, width)
     
@@ -276,6 +257,11 @@ class Keyboard(object):
         """
         print "note off received: ", event
 
+    def on_sustain(self, event):
+        """
+        """
+        print "sustain event received ", event
+        
     #def publish_midi_event(self, event, midi_id, velocity=127):
     #    """
     #    """
