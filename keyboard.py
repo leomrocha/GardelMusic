@@ -107,13 +107,17 @@ class KeySprite(pygame.sprite.DirtySprite):
         #if finger >=1 && <=5 also overlay the finger id on the key
         self.state = 'pressed'
         self.image_index = 1
+        #TODO WARNING, see how this should be updated ... not sure if here
+        self.on_update()
         
     def on_note_off(self):
         """
         """
         self.state = 'rest'
         self.image_index = 0
-
+        #TODO WARNING, see how this should be updated ... not sure if here
+        self.on_update()
+        
     def on_update(self):
         """
         """
@@ -220,6 +224,7 @@ class Keyboard(object):
     def __init__(self, screen, midi_pubsub, pos=(0,0), width=1060):
         """
         """
+        self.KEY_RANGE = (21,108)
         
         self.screen  = screen
         
@@ -250,12 +255,19 @@ class Keyboard(object):
         """
         """
         print "note on received: ", event
+        note = event.data1
+        index = note - self.KEY_RANGE[0]
+        key = self.keys[index]
+        key.on_note_on()
         
-
     def on_note_off(self, event):
         """
         """
         print "note off received: ", event
+        note = event.data1
+        index = note - self.KEY_RANGE[0]
+        key = self.keys[index]
+        key.on_note_off()
 
     def on_sustain(self, event):
         """
@@ -271,7 +283,7 @@ class Keyboard(object):
         """
         """
         #obtain 
-        keyboard_map = keyboard_mappings.generate_keyboard_map(key_range=(21,108),width=width)
+        keyboard_map = keyboard_mappings.generate_keyboard_map(key_range=self.KEY_RANGE,width=width)
         key_map = keyboard_map['keyboard_map']
         kb_width, kb_height = keyboard_map['size']
         padding = keyboard_map['padding']
