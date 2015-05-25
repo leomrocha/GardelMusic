@@ -254,7 +254,7 @@ class Keyboard(object):
     def on_note_on(self, event):
         """
         """
-        print "note on received: ", event
+        #print "note on received: ", event
         note = event.data1
         index = note - self.KEY_RANGE[0]
         key = self.keys[index]
@@ -263,7 +263,7 @@ class Keyboard(object):
     def on_note_off(self, event):
         """
         """
-        print "note off received: ", event
+        #print "note off received: ", event
         note = event.data1
         index = note - self.KEY_RANGE[0]
         key = self.keys[index]
@@ -272,7 +272,9 @@ class Keyboard(object):
     def on_sustain(self, event):
         """
         """
-        print "sustain event received ", event
+        #TODO
+        #print "sustain event received ", event
+        pass
         
     #def publish_midi_event(self, event, midi_id, velocity=127):
     #    """
