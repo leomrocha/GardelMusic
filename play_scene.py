@@ -13,11 +13,12 @@ class PlayScene(object):
     """
     """
 
-    def __init__(self, director):
+    def __init__(self, director, midi_pubsub):
         self.director = director
         self.screen = director.screen
         self.w, self.h = director.screen.get_size()
         
+        self.midi_pubsub = midi_pubsub
         self.dirty = True
         
         self.setup_scene()
@@ -28,7 +29,7 @@ class PlayScene(object):
         """
         #TODO make something more dynamic, for the moment only shows the hardcoded keyboard
         #self.instrument = KeyboardSprite()
-        self.instrument = Keyboard(self.screen, pos=(0, self.h-250), width=self.w)
+        self.instrument = Keyboard(self.screen, midi_pubsub=self.midi_pubsub, pos=(0, self.h-250), width=self.w)
         
         #self.instrument_group = pygame.sprite.Group()
         #self.instrument_group.add(self.instrument)

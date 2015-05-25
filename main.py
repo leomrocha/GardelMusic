@@ -4,6 +4,8 @@
 import sys
 
 import pygame
+import pygame.midi
+import pygame.fastevent
 
 import director
 
@@ -14,6 +16,9 @@ def setup():
     sets up many things needed previous the game starting
     """
     pygame.init()
+    pygame.fastevent.init()
+    pygame.midi.init()
+
 
 
 def teardown():

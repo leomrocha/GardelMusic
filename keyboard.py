@@ -18,7 +18,7 @@ class KeySprite(pygame.sprite.DirtySprite):
     """
     Key sprite that
     """
-    def __init__(self, midi_id, pos, size, color, synesthesia=(100,100,100)):
+    def __init__(self, midi_id, pos, size, color, midi_publish, synesthesia=(100,100,100)):
         """
         midi_id = midi_id of the represented key
         pos = position
@@ -50,6 +50,10 @@ class KeySprite(pygame.sprite.DirtySprite):
         self.size = size
         #self.name = name
         self.synesthesia = synesthesia
+        
+        ####MIDI function that allows publishing midi events
+        self.midi_publish = midi_publish
+        
         #if key is black
         if color == 'black':
             self.image = black_key_image = pygame.transform.scale(black_key_image, size)
@@ -84,6 +88,7 @@ class KeySprite(pygame.sprite.DirtySprite):
         when the key is pressed by the user on the screen
         """
         #TODO emit note on midi event
+        self.midi_publish("note_on", self.midi_id)
         self.on_note_on()
         
     def on_key_release(self):
@@ -91,6 +96,7 @@ class KeySprite(pygame.sprite.DirtySprite):
         when the key is pressed by the user on the screen
         """
         #TODO emit note off midi event
+        self.midi_publish("note_off", self.midi_id)
         self.on_note_off()
         
     def on_note_on(self, finger=0):
@@ -214,7 +220,7 @@ class KeyboardSprite(pygame.sprite.Sprite):
 class Keyboard(object):
     """
     """
-    def __init__(self, screen, pos=(0,0), width=1060):
+    def __init__(self, screen, midi_pubsub, pos=(0,0), width=1060):
         """
         """
         #Super constructor
@@ -227,7 +233,13 @@ class Keyboard(object):
         
         self.screen  = screen
         
+        #setup midi handling
+        self.midi_pubsub=midi_pubsub
         
+        midi_pubsub.subscribe("note_on", self.on_note_on)
+        midi_pubsub.subscribe("note_off", self.on_note_off)
+        
+        ###end MIDI
         #self.screen.blit(self.background, pos)
         
         #define sprite groups
@@ -235,11 +247,12 @@ class Keyboard(object):
         self.white_keys_group = pygame.sprite.Group()
         self.black_keys_group = pygame.sprite.Group()
         # LayeredUpdates instead of group to draw in correct order
-        self.allkeys = pygame.sprite.LayeredUpdates() # more sophisticated than simple group
+        #self.allkeys = pygame.sprite.LayeredUpdates() # more sophisticated than simple group
         #self.allgroups = pygame.sprite.LayeredUpdates() # more sophisticated than simple group
         self.allgroups = pygame.sprite.Group()
         
-        KeySprite.groups = self.allkeys, self.allgroups
+        #KeySprite.groups = self.allkeys, self.allgroups
+        KeySprite.groups = self.allgroups
         #TODO layers
         #Active Key Images (colors only) layer
         #TODO
@@ -252,6 +265,22 @@ class Keyboard(object):
         self.keys = []
         self._setup_keys(pos, width)
     
+    def on_note_on(self, event):
+        """
+        """
+        print "note on received: ", event
+        
+
+    def on_note_off(self, event):
+        """
+        """
+        print "note off received: ", event
+
+    #def publish_midi_event(self, event, midi_id, velocity=127):
+    #    """
+    #    """
+    #    self.midi_pubsub.publish(event, midi_id, velocity)
+
     def _setup_keys(self, pos, width):
         """
         """
@@ -277,7 +306,8 @@ class Keyboard(object):
             key_color = k['color']
             
             ks = KeySprite(midi_id=k['midi_id'], pos=key_pos , size=key_size , 
-                           color=key_color , synesthesia=k['synesthesia'] )
+                           color=key_color , midi_publish = self.midi_pubsub.publish,
+                           synesthesia=k['synesthesia'] )
             self.keys.append(ks)
             if k['color'] == 'black':
                 self.black_keys_group.add(ks)
@@ -302,7 +332,11 @@ class Keyboard(object):
         self.allgroups.clear(screen, self.background.image)
         self.allgroups.update()
         self.allgroups.draw(screen)
+
+        #display
         
+        
+        #keys
         self.white_keys_group.clear(screen, self.kb_background)
         self.white_keys_group.update()
         self.white_keys_group.draw(screen)
@@ -310,8 +344,6 @@ class Keyboard(object):
         self.black_keys_group.clear(screen, self.kb_background)
         self.black_keys_group.update()
         self.black_keys_group.draw(screen)
-
-        
         #self.allkeys.draw(screen)
         #self.allgroups.draw(screen)
         pass

@@ -298,6 +298,7 @@ def get_color(midi_id, color_theme='Steve Zieverink (2004)'):
     convert = False
     
     color = theme[color_id]
+    #TODO fix the color conversion because is not showing the same as the ones from MIDI.js on the output
     #print "this color: ", color    
     if  'format' in theme and theme['format'] == 'HSV':
         h,s,v = color

@@ -14,6 +14,9 @@ import sys
 #import all the scenes
 import home_scene
 import play_scene
+######MIDI
+
+from  midi_connection import MIDIPubSub
 ####
 
 ###Setup screen size automagically
@@ -46,8 +49,6 @@ class Director:
         #self.screen = pygame.display.set_mode((1600, 900), RESIZABLE)
         #self.screen = pygame.display.set_mode((1600, 900))
 
-
-
         pygame.display.set_caption("Piano Challenge")
 
         clock = pygame.time.Clock() # create a clock object for timing
@@ -55,8 +56,18 @@ class Director:
         self.scene = None
         self.quit_flag = False
         self.clock = pygame.time.Clock()
+
+        #Setup Midi
         
+        self.setup_midi()
         self.setup_scenes()
+        
+    def setup_midi(self):
+        """
+        """
+        self.midi_pubsub = MIDIPubSub()
+        #self.midi_active = False
+        self.midi_active = True
         
     def setup_scenes(self):
         """
@@ -69,7 +80,7 @@ class Director:
         #Game Menu
         
         #play scene
-        self.scenes["play"] = play_scene.PlayScene(self)
+        self.scenes["play"] = play_scene.PlayScene(self, self.midi_pubsub)
         #Set start screen
         self.set_scene(self.start_scene)
 
@@ -95,7 +106,7 @@ class Director:
         while not self.quit_flag:
             time = self.clock.tick(100)
             
-            # Eventos de Salida
+            # EXIT process
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.quit()
@@ -104,8 +115,11 @@ class Director:
 			            self.quit()
 	            #scene event handling (has to be here because loop over events empties the queue
                 self.scene.on_event(event)
-            # detecta eventos
-            #self.scene.on_event()
+
+                        
+            #Process  MIDI events
+            if self.midi_active:
+                self.midi_pubsub
 
             # actualiza la escena
             self.scene.on_update()
