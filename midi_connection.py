@@ -96,6 +96,7 @@ class MIDIPubSub(object):
             #handle note_on_ && note_off
             #midi_id = e.data1
             #velocity = e.data2
+            subs = []
             if e.status == 144:
                 subs = self.note_on_subs
             elif e.status == 128:
