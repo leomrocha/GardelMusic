@@ -13,7 +13,7 @@ class ButtonStates(object):
     hover = "hover"    
     pressed = "pressed"
 
-class Button(pygame.sprite.Sprite):
+class Button(pygame.sprite.DirtySprite):
     """
     Button
     

@@ -6,6 +6,7 @@ import os
 import pygame
 
 import keyboard_mappings
+from button import ButtonStates
 
 
 #make this global so they don't load many times (has o
@@ -13,11 +14,11 @@ black_key_image = None
 white_key_image = None
 
 
-
 class KeySprite(pygame.sprite.DirtySprite):
     """
     Key sprite that
     """
+    #TODO inherit from button.Button instead
     def __init__(self, midi_id, pos, size, color, midi_publish, synesthesia=(100,100,100)):
         """
         midi_id = midi_id of the represented key
@@ -82,8 +83,8 @@ class KeySprite(pygame.sprite.DirtySprite):
         self.rect.x = pos[0]
         self.rect.y = pos[1]
         
-        #key state ('rest' | 'pressed')
-        self.state = 'rest'
+        #key state # from ButtonStates ('rest' | 'pressed')
+        self.state = ButtonStates.passive
         
     def on_key_press(self):
         """
@@ -107,7 +108,7 @@ class KeySprite(pygame.sprite.DirtySprite):
         #draw the colored overlay
         
         #if finger >=1 && <=5 also overlay the finger id on the key
-        self.state = 'pressed'
+        self.state = ButtonStates.pressed
         self.image_index = 1
         #TODO WARNING, see how this should be updated ... not sure if here
         self.on_update()
@@ -115,7 +116,7 @@ class KeySprite(pygame.sprite.DirtySprite):
     def on_note_off(self):
         """
         """
-        self.state = 'rest'
+        self.state = ButtonStates.passive
         self.image_index = 0
         #TODO WARNING, see how this should be updated ... not sure if here
         self.on_update()
@@ -130,16 +131,21 @@ class KeySprite(pygame.sprite.DirtySprite):
     def on_event(self, event=None):
         """
         """
+        #activate on key events
         if self.rect.collidepoint(pygame.mouse.get_pos()):
+            #mouse_pressed = pygame.mouse.get_pressed()
+            #print "mouse_pressed = ", mouse_pressed
             #print "mouse over"
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            #press key if any mouse button is pressed
+            #if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.state == ButtonStates.passive and 1 in pygame.mouse.get_pressed():
                 #print "mouse button pressed"
                 self.on_key_press()
-            if event.type == pygame.MOUSEBUTTONUP:
+            elif self.state == ButtonStates.pressed and  event.type == pygame.MOUSEBUTTONUP:
                 #print "mouse button released"
                 self.on_key_release()
-                
-        elif self.image_index != 0:
+        #elif self.image_index != 0:
+        elif self.state == ButtonStates.pressed:
             self.on_key_release()
         
         self.on_update()
@@ -241,8 +247,9 @@ class Keyboard(object):
         #KeySprite.groups = self.allkeys, self.allgroups
         KeySprite.groups = self.allgroups
         self.keys = []
+        self.active_keys = [] # keep track of the currently active keys
         self._setup_keys(pos, width)
-    
+        
     def on_note_on(self, event):
         """
         """
@@ -349,14 +356,25 @@ class Keyboard(object):
                 collitions.append(k)
         #there should be only 2 collitions max (one white and one black)
         assert(len(collitions) >=0 and len(collitions) <=2)
+        #update state of active keys:
+        for k in self.active_keys:
+            k.on_event(event)
+            #eliminate keys that have been inactivated
+            if k.state == ButtonStates.passive:
+                self.active_keys.remove(k)
         #if more than one collition, only activate the black key
         if len(collitions) > 1:
             for k in collitions:
                 if k.key_color == 'black':
                     k.on_event(event)
+                    #keep track of pressed keys
+                    if k.state == ButtonStates.pressed:
+                        self.active_keys.append(k)
         else:
             for k in collitions:
                 k.on_event(event)
+                if k.state == ButtonStates.pressed:
+                    self.active_keys.append(k)
         
     def on_mouse_down(self, pos):
         """
