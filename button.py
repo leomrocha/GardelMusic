@@ -83,9 +83,9 @@ class Button(pygame.sprite.Sprite):
             if self.current_state == ButtonStates.passive:
                 self.current_button = self.img_hover
                 self.current_state = ButtonStates.hover
-                print "callback ?? ",self.on_hover_callback
+                #print "callback ?? ",self.on_hover_callback
                 if self.on_hover_callback:
-                    print "calling hover callback"
+                    #print "calling hover callback"
                     self.on_hover_callback()
                 self.dirty = True
                 
@@ -93,18 +93,18 @@ class Button(pygame.sprite.Sprite):
                 #print "mouse button pressed"
                 self.current_button = self.img_pressed
                 self.current_state = ButtonStates.pressed
-                print "callback ?? ",self.on_press_callback
+                #print "callback ?? ",self.on_press_callback
                 if self.on_press_callback:
-                    print "calling press callback"
+                    #print "calling press callback"
                     self.on_press_callback()
                 self.dirty = True
                 
             elif event.type == pygame.MOUSEBUTTONUP:
                 #print "mouse button released"
                 self.current_button = self.img_passive
-                print "callback ?? ",self.on_release_callback
+                #print "callback ?? ",self.on_release_callback
                 if self.on_release_callback:
-                    print "calling release callback"
+                    #print "calling release callback"
                     self.on_release_callback()
                 self.dirty = True
                 

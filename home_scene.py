@@ -34,15 +34,15 @@ class HomeScene(Scene):
         self.dirty = True
         
     def on_button_press(self):
-        print "button press called"
+        #print "button press called"
         self.dirty = True
         
     def on_button_hover(self):
-        print "button hover called"
+        #print "button hover called"
         self.dirty = True
         
     def on_button_release(self):
-        print "button release called"
+        #print "button release called"
         self.director.set_scene("play")
         
     def on_update(self):
