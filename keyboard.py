@@ -24,9 +24,11 @@ class KeySprite(pygame.sprite.DirtySprite):
         pos = position
         size = size of the key
         color = [white|black]
+        midi_publish = function for midi pubsub call to publish a midi event
         synesthesia = the color that the key takes when activated. By default a shade of grey
         
         """
+        
         #WARNING AWFUL
         #this is here to load for the first time the images as the display MUST be initialized
         try:
@@ -156,24 +158,9 @@ class KeyGroup(pygame.sprite.Group):
     pass
 
 
-class BlackKeyGroup(pygame.sprite.Sprite):
-    """
-    """
-    #TODO
-    pass
-
-
-class KeyboardGroup(pygame.sprite.Group):
-    """
-    Piano keyboard 
-    is a piano keyboard implementation where everything is computer generated
-    """
-    #TODO
-    pass
-
 class KeyboardSprite(pygame.sprite.Sprite):
     """
-    Piano Keyboard Sprite
+    Piano Keyboard Sprite basic romo an image, no behaviour is handled
     """
     
     def __init__(self, pos=(0,0)):
@@ -220,7 +207,12 @@ class KeyboardSprite(pygame.sprite.Sprite):
 
 class Keyboard(object):
     """
+    Complete keyboard implementation
     """
+    #TODO some nice thingies for the keys :
+    #   - sustain pedals
+    #   - top rect with synesthesia for each key
+    #   - finger number and hand indication, localized (i18n) example: right1 = r1 , left2 = l2; gauche1 = g1, droite3 = d3
     def __init__(self, screen, midi_pubsub, pos=(0,0), width=1060):
         """
         """

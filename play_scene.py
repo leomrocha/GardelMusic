@@ -8,6 +8,7 @@ The instrument, that shows what is happening and/or what should be happening wit
 
 import pygame
 from keyboard import *
+from displays import *
 
 class PlayScene(object):
     """
@@ -31,6 +32,7 @@ class PlayScene(object):
         #self.instrument = KeyboardSprite()
         self.instrument = Keyboard(self.screen, midi_pubsub=self.midi_pubsub, pos=(0, self.h-250), width=self.w)
         
+        self.player_display = PlayerVerticalDisplay(self.screen, size=(int(1040 * self.w /1060. ), self.h -350), pos=(0, 100))
         #self.instrument_group = pygame.sprite.Group()
         #self.instrument_group.add(self.instrument)
         #TEST        
@@ -86,14 +88,14 @@ class PlayScene(object):
                 - right hand display
             - the one that shows the user feedback of what is he/she doing
         """
-        #TODO
+        self.player_display.on_draw(self.screen)
         pass
         
     def _draw_instrument(self):
         """
         Instrument, one of the most important elements (piano keyboard for example)
         """
-        #self.instrument_group.draw(self.screen)
+        self.instrument.on_draw(self.screen)
         
         pass
         

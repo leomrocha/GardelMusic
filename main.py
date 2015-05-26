@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import time
 
 import pygame
 import pygame.midi
@@ -16,6 +17,7 @@ def setup():
     sets up many things needed previous the game starting
     """
     pygame.init()
+    #time.sleep(0.2) #just in case ... ?
     pygame.fastevent.init()
     pygame.midi.init()
 
@@ -25,7 +27,7 @@ def teardown():
     """
     finishes everything that has to be ended before game exit
     """
-    pass
+    pygame.midi.quit()
 
 
 def process_event(event):
