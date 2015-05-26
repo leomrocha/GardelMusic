@@ -144,7 +144,7 @@ class KeySprite(pygame.sprite.DirtySprite):
             elif self.state == ButtonStates.pressed and  event.type == pygame.MOUSEBUTTONUP:
                 #print "mouse button released"
                 self.on_key_release()
-        #elif self.image_index != 0:
+        #mouse is gone from the key
         elif self.state == ButtonStates.pressed:
             self.on_key_release()
         
@@ -356,10 +356,10 @@ class Keyboard(object):
                 collitions.append(k)
         #there should be only 2 collitions max (one white and one black)
         assert(len(collitions) >=0 and len(collitions) <=2)
-        #update state of active keys:
+        #update state of active keys - this fixes the problem on hover out while mouse button pressed
         for k in self.active_keys:
             k.on_event(event)
-            #eliminate keys that have been inactivated
+            #eliminate keys that have been deactivated from the active_keys
             if k.state == ButtonStates.passive:
                 self.active_keys.remove(k)
         #if more than one collition, only activate the black key
