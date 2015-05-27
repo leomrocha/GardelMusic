@@ -75,6 +75,7 @@ class PlayScene(object):
         keyboard_map = self.instrument.keyboard_map
         self.player_display.set_midi_info(self.level_info, keyboard_map)
         self.dirty = True
+        self.player_display.play()
         #END TEST
         pass
         
@@ -84,7 +85,9 @@ class PlayScene(object):
         """
         self.midi_pubsub.poll()
         self.instrument.on_draw(self.screen)
+
         #TEST
+        self.player_display.on_update()
         self.play_button.on_update()
         
     def on_event(self, event):
@@ -101,9 +104,11 @@ class PlayScene(object):
         """
         if not screen:
             screen = self.screen
+
+        self._draw_display()
+
         if self.dirty:
             self._draw_background()
-            self._draw_display()
             self._draw_instrument()
             self._draw_scoreboard()
             self._draw_menu()

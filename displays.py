@@ -5,7 +5,7 @@ Vertical display for an 88 key piano keyboard
 
 import os
 import pygame
-
+import time
 
 from file_loader import ticks2sec
 
@@ -80,7 +80,12 @@ class NoteSprite(pygame.sprite.Sprite):
                 
         self.image = self.images[self.image_index]
 
-        
+    def move(self, vector):
+        """
+        vector = (x,y) movement
+        """
+        self.rect.x += vector[0]
+        self.rect.y += vector[1]
         
     def on_draw(self, scene):
         """
@@ -179,11 +184,31 @@ class PlayerVerticalDisplay(object):
         NoteSprite.groups = self.allgroups, self.notes_group
         
         self.notes = []
+        #vertical time (from note appearing to note desapearing), in seconds (should be configurable)
+        self.vtime = 5
+
+        self.last_update = time.time()
+        self.playing = False
                 
+    def play(self):
+        self.playing = True
+        self.last_update = time.time()
+                
+    def pause(self):
+        self.playing = False
+        
     def on_update(self):
         """
         """
-        pass
+        #calculate how much time was elapsed
+        now = time.time()
+        delta = now - self.last_update
+        self.last_update = now
+        #calculate vertical movement
+        vmove = self.size[1] * delta / self.vtime
+        #for all notes, move them
+        for n in self.notes:
+            n.move((0,vmove))
     
     def on_draw(self, screen):
         """
@@ -228,14 +253,9 @@ class PlayerVerticalDisplay(object):
         
         self.bpm,self.mpqn = self.midi_info.get_tempo()
         self.resolution = self.midi_info.get_resolution()
-        #milli seconds per tick
-        #spt = ticks2sec(1, self.bpm, self.resolution)
-        #vertical time (from note appearing to note desapearing), in seconds
-        self.vtime = 5
-        # some graphical properties to define
+
         #print "kb map", keyboard_map
         key_size = keyboard_map["key_size"]
-        
 
         #now generate notes sprites
         for track in midi_info.tracks:
