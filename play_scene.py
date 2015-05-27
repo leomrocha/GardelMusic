@@ -96,6 +96,7 @@ class PlayScene(object):
         self.play_button.on_event(event)
         #self.keysprite.on_event(event)
         self.instrument.on_event(event)
+        self.player_display.on_event(event)
         #self.dirty = True
         pass
 

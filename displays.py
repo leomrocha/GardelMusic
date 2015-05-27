@@ -5,11 +5,15 @@ Vertical display for an 88 key piano keyboard
 
 import os
 import pygame
+from subpixel.subpixelsurface import SubPixelSurface
+
 import time
+
+
 
 from file_loader import ticks2sec
 
-
+from button import ButtonStates
 #
 import keyboard_mappings
 import synesthesia
@@ -40,7 +44,7 @@ REF_NUMBER_KEYS = 88
 class NoteSprite(pygame.sprite.Sprite):
     """
     """
-    def __init__(self, size, pos, midi_id, midi_publish, synesthesia):
+    def __init__(self, size, pos, midi_id, tick_start, tick_end, midi_publish, synesthesia):
         """
         """
         super(NoteSprite, self).__init__()
@@ -52,24 +56,30 @@ class NoteSprite(pygame.sprite.Sprite):
         self.octave = midi_id / 12
         self.pos = pos
         self.size = size
+        self.tick_start = tick_start
+        self.tick_end = tick_end
         #self.name = name
         self.synesthesia = synesthesia
         
         ####MIDI function that allows publishing midi events
         self.midi_publish = midi_publish
         
-        x,y = pos
+        self.x,self.y = pos
         w,h = size
         #if key is black
-        self.rect = pygame.Rect([x,y,w,h])
+        self.rect = pygame.Rect([self.x,self.y,w,h])
+
         #create and append the pressed image with the same size as the background image
         self.image_off = pygame.Surface([self.rect.width, self.rect.height], pygame.HWSURFACE)
+        #replacement with subpixel library
         self.image_off.set_alpha(128)
         self.image_off.fill(self.synesthesia)
+        self.subpixel_image_off = SubPixelSurface(self.image_off, 5, 5)
         
         self.image_on = pygame.Surface([self.rect.width, self.rect.height], pygame.HWSURFACE)
         #self.image_off.set_alpha(255)
         self.image_on.fill(self.synesthesia)
+        self.subpixel_image_on = SubPixelSurface(self.image_on , 5, 5)
         
         #append rest image        
         self.images.append(self.image_off)
@@ -79,13 +89,26 @@ class NoteSprite(pygame.sprite.Sprite):
         self.image_index = 0
                 
         self.image = self.images[self.image_index]
+        
+        #note state
+        self.state = ButtonStates.passive
 
     def move(self, vector):
         """
         vector = (x,y) movement
         """
-        self.rect.x += vector[0]
-        self.rect.y += vector[1]
+        self.x += vector[0]
+        self.y += vector[1]
+        self.rect.x = self.x
+        self.rect.y = self.y
+        #Subpixel calculations IMPORTANT
+        #without this, the pygame renderer acts differently when coordinates are:
+        #                    negative (negative_coord+1.7 == negative_coord +2 )
+        #                    positive (positive_coord+1.7 == positive_coord +1 )
+        #there is the need to make this better, also this library helps at easing
+        #for all animations
+        self.image_on = self.subpixel_image_on.at(self.x, self.y)
+        self.image_off = self.subpixel_image_off.at(self.x, self.y)
         
     def on_draw(self, scene):
         """
@@ -98,25 +121,20 @@ class NoteSprite(pygame.sprite.Sprite):
         #print "calling on_update", self.image_index
         self.image = self.images[self.image_index]
         
-        
     def on_event(self, event=None):
         """
         """
+        #print "note collision check: ", self.rect, pygame.mouse.get_pos()
+        #activate on key events
         if self.rect.collidepoint(pygame.mouse.get_pos()):
-            #print "mouse over"
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                #print "mouse button pressed"
-                self.on_key_press()
-            if event.type == pygame.MOUSEBUTTONUP:
-                #print "mouse button released"
-                self.on_key_release()
-                
-        elif self.image_index != 0:
-            self.on_key_release()
+            if self.state == ButtonStates.passive and 1 in pygame.mouse.get_pressed():
+                self.on_note_press()
+            elif self.state == ButtonStates.pressed and  event.type == pygame.MOUSEBUTTONUP:
+                self.on_note_release()
+        elif self.state == ButtonStates.pressed:
+            self.on_note_release()
         
         self.on_update()
-        
-        
         
     def on_note_press(self):
         """
@@ -140,7 +158,7 @@ class NoteSprite(pygame.sprite.Sprite):
         #TODO change brightness/color/etc for the note to show it has been pressed
         
         #if finger >=1 && <=5 also overlay the finger id on the key
-        self.state = 'pressed'
+        self.state = ButtonStates.pressed
         self.image_index = 1
         #TODO WARNING, see how this should be updated ... not sure if here
         self.on_update()
@@ -149,7 +167,7 @@ class NoteSprite(pygame.sprite.Sprite):
         """
         """
         #TODO change brightness/color/etc for the note to show it has been released
-        self.state = 'rest'
+        self.state = ButtonStates.passive
         self.image_index = 0
         #TODO WARNING, see how this should be updated ... not sure if here
         self.on_update()
@@ -189,6 +207,8 @@ class PlayerVerticalDisplay(object):
 
         self.last_update = time.time()
         self.playing = False
+        #updating, to avoid interruption of the function ... ??
+        self.updating = False
                 
     def play(self):
         self.playing = True
@@ -197,23 +217,47 @@ class PlayerVerticalDisplay(object):
     def pause(self):
         self.playing = False
         
+    def __verify_overlap(self):
+        """
+        function to find out a bug that makes some elements move faster than others up to one point
+        this is SLOOOW
+        """
+        
+        for i in range(len(self.notes)-1):
+            for j in range(i+1,len(self.notes)):
+                n1 = self.notes[i]
+                n2 = self.notes[j]
+                if n1.rect.colliderect(n2.rect):
+                    print "collision detected at time: ", self.last_update
+                    print "n1:  ", n1.midi_id, n1.tick_start, n1.tick_end, n1.rect
+                    print "n:  ", n2.midi_id, n2.tick_start, n2.tick_end, n2.rect
     def on_update(self):
         """
         """
-        #calculate how much time was elapsed
-        now = time.time()
-        delta = now - self.last_update
-        self.last_update = now
-        #calculate vertical movement
-        vmove = self.size[1] * delta / self.vtime
-        #for all notes, move them
-        for n in self.notes:
-            n.move((0,vmove))
-    
+        #if False:
+        if not self.updating:
+            self.updating = True
+            #calculate how much time was elapsed
+            now = time.time()
+            delta = now - self.last_update
+            self.last_update = now
+            #calculate vertical movement
+            vmove = self.size[1] * delta / self.vtime
+            #print "#############################"
+            #print delta, vmove, len(self.notes)
+            #for all notes, move them
+            for n in self.notes:
+                #print n, n.midi_id
+                n.move((0,vmove))
+                #print "displacement:  ", n.midi_id, n.tick_start, n.tick_end, n.rect
+            #print "#############################"
+            self.updating = False
+        self.__verify_overlap()
+        
     def on_draw(self, screen):
         """
         """
-        print "drawing "
+        #print "drawing "
         screen.blit(self.background, self.pos)
         self.allgroups.clear(screen, self.background)
         self.allgroups.update()
@@ -228,7 +272,9 @@ class PlayerVerticalDisplay(object):
     def on_event(self, event):
         """
         """
-        pass
+        #TODO make this more efficient, for the moment is doing a loop on every note
+        for n in self.notes:
+            n.on_event(event)
 
     def __find_note_in_mapping(self, midi_id, keyboard_map):
         """
@@ -242,11 +288,21 @@ class PlayerVerticalDisplay(object):
         """
         """
         #TODO
+        print "publishing midi event: %s : %d" %(event_type, midi_id)
         pass
+        
+    def clean_all(self):
+        """
+        cleans all the notes in the current buffer
+        """
+        self.allgroups.empty()
+        self.notes_group.empty()
+        self.notes[:] = []
         
     def set_midi_info(self, midi_info, keyboard_map):
         """
         """
+        self.clean_all()
         print "setting midi info"
         #
         self.midi_info = midi_info
@@ -260,6 +316,8 @@ class PlayerVerticalDisplay(object):
         #now generate notes sprites
         for track in midi_info.tracks:
             for ae in track:
+                #TEST
+                #END TEST
                 #get midi_id
                 midi_id = ae.get_pitch()
                 tick_duration = ae.get_duration()
@@ -275,14 +333,16 @@ class PlayerVerticalDisplay(object):
                     height = self.size[1] * sec_duration / self.vtime
                     size = [note_map['size'][0], height]
                     #negative y position (above the display) 
-                    ypos = - (self.pos[1] * sec_start / self.vtime) + self.pos[1] 
+                    ypos = - (self.size[1] * sec_start / self.vtime) - height + self.pos[1] + 800
+                    #ypos = - (self.pos[1] * sec_start / self.vtime) -height + self.pos[1]
                     pos = (note_map['pos'][0], ypos)
-                    note = NoteSprite(size, pos, midi_id, self.midi_publish, note_map['synesthesia'])
+                    note = NoteSprite(size, pos, midi_id, tick_start, tick_end, self.midi_publish, note_map['synesthesia'])
                     synesthesia = note_map['synesthesia']
                     #
                     self.notes.append(note)
                     self.notes_group.add(note)
                     #print "note ", midi_id, sec_duration, tick_duration, sec_start, tick_start, sec_end, tick_end, synesthesia, size, pos
+                    print "note ", midi_id, tick_start, tick_end, size, pos
                     
 
 ################################################################################

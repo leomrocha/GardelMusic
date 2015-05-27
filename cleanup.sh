@@ -1,4 +1,4 @@
 
 #!/bin/bash
 rm */*/*/*~ */*/*~ */*~ *~
-rm *.pyc
+rm *.pyc */*.pyc */*/*.pyc
