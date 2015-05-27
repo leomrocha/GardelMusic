@@ -68,47 +68,6 @@ def analyse_midi(fname):
     return (pattern, info_dict, tracks)
     
 
-class AssociatedEvents(object):
-    """
-    Contains a NoteOn and NoteOff event
-    """
-    
-    def __init__(self):
-        self.data = [None, None]
-    
-    def get_note_on(self):
-        return self.data[0]
-    def set_note_on(self, event):
-        if not isinstance(event, midi.NoteOnEvent):
-            raise ValueError('Not a valid NoteOnEvent')
-        self.data[0] = event
-    
-    note_on = property(get_note_on, set_note_on)
-
-    def get_note_off(self):
-        return self.data[1]
-    def set_note_off(self, event):
-        #validate
-        if self.data[0] is None:
-            raise ValueError("NoteOnEvent not set, can't set NoteOffEvent")
-        elif not isinstance(event, midi.NoteOffEvent):
-            raise ValueError('Not a valid NoteOffEvent')
-        elif event.tick < self.data[0].tick:
-            raise ValueError('Not a valid tick time for NoteOfEvent (tick < NoteOnEvent.tick')
-        elif event.pitch < self.data[0].pitch:
-            raise ValueError('NoteOfEvent.pitch is NOT the same as NoteOnEvent.pitch')
-        #validation completed, now save the event
-        self.data[1] = event
-        
-
-    note_off = property(get_note_off, set_note_off)
-
-    def is_complete(self):
-        """
-        returns True if contains a note_on and a note_off event 
-        where note_off 
-        """
-
 def is_note_on(event):
     """
     checks if is instance of note on event
@@ -124,10 +83,75 @@ def is_note_off(event):
     ret = isinstance(event, midi.NoteOffEvent) or (isinstance(event, midi.NoteOnEvent) and event.velocity == 0)
     return ret
 
+
+class AssociatedEvents(object):
+    """
+    Contains one associated NoteOn with a NoteOff events
+    NoteOffEvent is later than NoteOnEvent
+    """
+    
+    def __init__(self):
+        self.data = [None, None]
+    
+    def get_note_on(self):
+        return self.data[0]
+    def set_note_on(self, event):
+        if not is_note_on(event):
+            raise ValueError('Not a valid NoteOnEvent')
+        self.data[0] = event
+    
+    note_on = property(get_note_on, set_note_on)
+
+    def get_note_off(self):
+        return self.data[1]
+    def set_note_off(self, event):
+        #validate
+        if self.data[0] is None:
+            raise ValueError("NoteOnEvent not set, can't set NoteOffEvent")
+        elif not is_note_off(event):
+            raise ValueError('Not a valid NoteOffEvent: %s' % str(event))
+        elif event.tick < self.data[0].tick:
+            raise ValueError('Not a valid tick time for NoteOffEvent (tick < NoteOnEvent.tick')
+        elif event.pitch < self.data[0].pitch:
+            raise ValueError('NoteOfEvent.pitch is NOT the same as NoteOnEvent.pitch')
+        #validation completed, now save the event
+        self.data[1] = event
+        
+
+    note_off = property(get_note_off, set_note_off)
+
+    def is_complete(self):
+        """
+        returns True if contains a note_on and a note_off event 
+        where note_off 
+        """
+        return None not in self.data
+    
+    def get_pitch(self):
+        """
+        returns the pitch, or 0 if no data
+        """
+        if self.data[0] is not None:
+            return self.data[0].pitch
+        return 0
+    
+    def get_duration(self):
+        """
+        Returns the duration in ticks, or 0 if missing data
+        """
+        if self.data[0] is not None and self.data[1] is not None:
+            return self.data[1].tick - self.data[0].tick
+        return 0
+
 def associate_events(track):
     """
     for the given track (as output from analyse_midi) creates pairs of associated events (note_on, note_off)
+    
+    track: an absolute tick ordered list of midi events (Track object from python-midi)
+    
     returns an ordered (by tick|time) list of the associated events
+    
+    
     """
     #all the associations    
     associations = []
@@ -138,8 +162,7 @@ def associate_events(track):
         #print e
         if is_note_off(e):
             if in_progress[e.pitch] is None:
-                print "NoteOffEvent without previous NoteOnEvent"
-                print e
+                print "NoteOffEvent without previous NoteOnEvent: ", e
             else:
                 ae = in_progress[e.pitch]
                 try:
@@ -152,8 +175,7 @@ def associate_events(track):
         elif is_note_on(e):
             #verify that the note is already OFF, (no note should be activated Twice without being turned off ... TODO check this assumption
             if in_progress[e.pitch] is not None:
-                print "Double NoteOnEvent without NoteOffEvent ... what to do ...?"
-                print in_progress[e.pitch], e
+                print "Double NoteOnEvent without NoteOffEvent: ", in_progress[e.pitch].note_on, e
             #create new association
             ae = AssociatedEvents()
             ae.note_on = e
@@ -168,7 +190,7 @@ def associate_events(track):
     #verify that all the events are matched
     for i in in_progress:
         if i is not None:
-            print "ERROR, there are missing associations: ", i 
+            print "ERROR, there are missing associations: ", i, i.note_on, i.note_off
         
     return associations
 
