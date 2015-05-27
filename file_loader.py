@@ -242,15 +242,6 @@ class MidiInfo(object):
             
         return associations
 
-
-def analyse_midi(fname):
-    """
-    Loads and analyses the given file creating a description returning a
-    MidiInfo object
-    """
-    return MidiInfo(fname)
-
-
 #####
 #midi file writer
 #####
