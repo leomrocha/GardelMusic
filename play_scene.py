@@ -10,6 +10,11 @@ import pygame
 from keyboard import *
 from displays import *
 
+from button import Button
+
+from file_loader import MidiInfo
+
+
 class PlayScene(object):
     """
     """
@@ -30,27 +35,62 @@ class PlayScene(object):
         """
         #TODO make something more dynamic, for the moment only shows the hardcoded keyboard
         #self.instrument = KeyboardSprite()
-        self.instrument = Keyboard(self.screen, midi_pubsub=self.midi_pubsub, pos=(0, self.h-250), width=self.w)
+        self.instrument = Keyboard(self.screen, midi_pubsub=self.midi_pubsub, pos=(0, self.h-300), width=self.w)
         
-        self.player_display = PlayerVerticalDisplay(self.screen, size=(int(1040 * self.w /1060. ), self.h -350), pos=(0, 100))
+        self.player_display = PlayerVerticalDisplay(self.screen, size=(int(1040 * self.w /1060. ), self.h -400), pos=(0, 100))
         #self.instrument_group = pygame.sprite.Group()
         #self.instrument_group.add(self.instrument)
         #TEST        
         #self.keysprite = KeySprite(midi_id=56, pos=(1200,200) , size=(40,200), color='white', synesthesia=(255,100,100))
         #self.instrument_group.add(self.keysprite)
+        self.play_button = Button(
+                        self.screen, 
+                        on_press_callback=self.on_play_button_press,
+                        on_hover_callback=self.on_play_button_hover,
+                        on_release_callback=self.on_play_button_release,
+                        size=(75,75), 
+                        pos=(self.w * 3 / 4 - 25, 10),
+                        image_passive=os.path.join("assets","images","icons","ic_play_circle_big_normal_o.png"),
+                        image_hover=os.path.join("assets","images","icons","ic_play_circle_normal_o.png"),
+                        image_active=os.path.join("assets","images","icons","ic_play_circle_pressed_o.png"),
+                        )
+        
+        self.dirty = True
+        
+    def on_play_button_press(self):
+        #print "button press called"
+        self.dirty = True
+        
+    def on_play_button_hover(self):
+        #print "button hover called"
+        self.dirty = True
+        
+    def on_play_button_release(self):
+        #print "button release called"
+        #
+        #TEST - this is AWFUL
+        fname = "../../tests_midi/python-midi/mary.mid"
+        self.level_info = MidiInfo(fname)
+        
+        keyboard_map = self.instrument.keyboard_map
+        self.player_display.set_midi_info(self.level_info, keyboard_map)
+        self.dirty = True
+        #END TEST
         pass
+        
 	
     def on_update(self):
         """
         """
         self.midi_pubsub.poll()
         self.instrument.on_draw(self.screen)
-        pass
+        #TEST
+        self.play_button.on_update()
         
     def on_event(self, event):
         """
         """
-        
+        self.play_button.on_event(event)
         #self.keysprite.on_event(event)
         self.instrument.on_event(event)
         #self.dirty = True
@@ -67,6 +107,8 @@ class PlayScene(object):
             self._draw_instrument()
             self._draw_scoreboard()
             self._draw_menu()
+            self.play_button.dirty = True
+            self.play_button.on_draw(screen)
             self.dirty = False
         
     def _draw_background(self):

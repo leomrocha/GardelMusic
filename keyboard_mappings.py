@@ -125,6 +125,7 @@ ref_height = 120
 
 keyboard_range=(21,95)
 
+#current_mappings = {}
 
 #def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.current_colors, width=1060, height=120, padding=(10,10,12.5,7.5)):
 #def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.current_colors, width=1060, height=120):
@@ -271,6 +272,7 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
         'size': size,
         'key_size': key_size
     }
+    #current_mappings = ret
     return ret
     
 def get_key_at(pos):

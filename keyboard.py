@@ -284,10 +284,10 @@ class Keyboard(object):
         """
         """
         #obtain 
-        keyboard_map = keyboard_mappings.generate_keyboard_map(key_range=self.KEY_RANGE,width=width)
-        key_map = keyboard_map['keyboard_map']
-        kb_width, kb_height = keyboard_map['size']
-        padding = keyboard_map['padding']
+        self.keyboard_map = keyboard_mappings.generate_keyboard_map(key_range=self.KEY_RANGE,width=width)
+        key_map = self.keyboard_map['keyboard_map']
+        kb_width, kb_height = self.keyboard_map['size']
+        padding = self.keyboard_map['padding']
         self.kb_background = pygame.Surface((kb_width, kb_height))
         self.kb_background.fill((26,26,26))     # fill white
         self.kb_background = self.kb_background.convert()  # jpg can not have transparency

@@ -70,3 +70,10 @@ import pygame
 
 #python-midi library
 import midi
+
+from file_loader import *
+
+class Level(object):
+    """
+    """
+    pass

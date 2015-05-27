@@ -6,6 +6,13 @@ Vertical display for an 88 key piano keyboard
 import os
 import pygame
 
+
+from file_loader import ticks2sec
+
+
+#
+import keyboard_mappings
+import synesthesia
 ####
 #TODO 
 #   make all the dimensions dynamic and allow other piano configurations
@@ -51,8 +58,10 @@ class NoteSprite(pygame.sprite.Sprite):
         ####MIDI function that allows publishing midi events
         self.midi_publish = midi_publish
         
+        x,y = pos
+        w,h = size
         #if key is black
-        self.rect = pygame.Rect(size)
+        self.rect = pygame.Rect([x,y,w,h])
         #create and append the pressed image with the same size as the background image
         self.image_off = pygame.Surface([self.rect.width, self.rect.height], pygame.HWSURFACE)
         self.image_off.set_alpha(128)
@@ -68,6 +77,9 @@ class NoteSprite(pygame.sprite.Sprite):
         
         #current image index
         self.image_index = 0
+                
+        self.image = self.images[self.image_index]
+
         
         
     def on_draw(self, scene):
@@ -166,7 +178,7 @@ class PlayerVerticalDisplay(object):
         #KeySprite.groups = self.allkeys, self.allgroups
         NoteSprite.groups = self.allgroups, self.notes_group
         
-        
+        self.notes = []
                 
     def on_update(self):
         """
@@ -176,13 +188,82 @@ class PlayerVerticalDisplay(object):
     def on_draw(self, screen):
         """
         """
+        print "drawing "
         screen.blit(self.background, self.pos)
+        self.allgroups.clear(screen, self.background)
+        self.allgroups.update()
+        self.allgroups.draw(screen)
+
+        self.notes_group.clear(screen, self.background)
+        self.notes_group.update()
+        self.notes_group.draw(screen)
+
         pass
         
     def on_event(self, event):
         """
         """
         pass
+
+    def __find_note_in_mapping(self, midi_id, keyboard_map):
+        """
+        """
+        for k in keyboard_map:
+             if midi_id == k['midi_id']:
+                return k
+        return None
+        
+    def midi_publish(self, event_type, midi_id):
+        """
+        """
+        #TODO
+        pass
+        
+    def set_midi_info(self, midi_info, keyboard_map):
+        """
+        """
+        print "setting midi info"
+        #
+        self.midi_info = midi_info
+        
+        self.bpm,self.mpqn = self.midi_info.get_tempo()
+        self.resolution = self.midi_info.get_resolution()
+        #milli seconds per tick
+        #spt = ticks2sec(1, self.bpm, self.resolution)
+        #vertical time (from note appearing to note desapearing), in seconds
+        self.vtime = 5
+        # some graphical properties to define
+        #print "kb map", keyboard_map
+        key_size = keyboard_map["key_size"]
+        
+
+        #now generate notes sprites
+        for track in midi_info.tracks:
+            for ae in track:
+                #get midi_id
+                midi_id = ae.get_pitch()
+                tick_duration = ae.get_duration()
+                sec_duration = ticks2sec(tick_duration, self.bpm, self.resolution)
+                tick_start = ae.get_init_tick()
+                sec_start = ticks2sec(tick_start, self.bpm, self.resolution)
+                tick_end = ae.get_end_tick()
+                sec_end = ticks2sec(tick_end, self.bpm, self.resolution)
+                #
+                note_map = self.__find_note_in_mapping(midi_id, keyboard_map['keyboard_map'])
+                #print "note found: ", note_map
+                if note_map is not None:
+                    height = self.size[1] * sec_duration / self.vtime
+                    size = [note_map['size'][0], height]
+                    #negative y position (above the display) 
+                    ypos = - (self.pos[1] * sec_start / self.vtime) + self.pos[1] 
+                    pos = (note_map['pos'][0], ypos)
+                    note = NoteSprite(size, pos, midi_id, self.midi_publish, note_map['synesthesia'])
+                    synesthesia = note_map['synesthesia']
+                    #
+                    self.notes.append(note)
+                    self.notes_group.add(note)
+                    #print "note ", midi_id, sec_duration, tick_duration, sec_start, tick_start, sec_end, tick_end, synesthesia, size, pos
+                    
 
 ################################################################################
 class PlayerHorizontalDisplay(object):

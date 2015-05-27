@@ -21,18 +21,39 @@ import midi
 ################################################################################
 #Time transformations
 
-def ticks2sec(ticks, BPM, resolution):
+
+def ticks2musec(ticks, BPM, resolution):
     """
+    microseconds
     """
     # micro seconds per beat
-    muspb = 60. * 1000000 /  BPM
-    sec = muspb / resolution
-    return sec
+    #muspb = 60. * 1000000 /  BPM
+    #micro seconds per tick
+    #muspt = muspb / resolution
+    #return muspt * ticks .
+    return ticks * 60000000. / (BPM * resolution)
     
 def ticks2ms(ticks, BPM, resolution):
     """
+    milliseconds
     """
-    return ticks2sec(ticks, BPM, resolution) * 1000
+    # micro seconds per beat
+    #muspb = 60. * 1000000 /  BPM
+    #micro seconds per tick
+    #muspt = muspb / resolution
+    #return muspt * ticks / 1000.
+    
+    return ticks * 60000. / (BPM * resolution)
+
+
+def ticks2sec(ticks, BPM, resolution):
+    """
+    seconds
+    """
+    #return ticks2ms(ticks, BPM, resolution) / 1000. ## ===
+    #return (60. / BPM)/resolution ## ===
+    return  ticks * 60. / (BPM * resolution)
+    
     
 
 ################################################################################
@@ -169,7 +190,29 @@ class MidiInfo(object):
         for t in self.pattern[1:]:
             self.tracks.append(self.associate_events(t))
 
-    @staticmethod        
+    def get_tempo(self):
+        """
+        returns: (bpm, mpqn)
+        mpqn = milliseconds per quarter note
+        """
+        #default values
+        ret = (120, 60 * 1000000 / 120)
+        if "tempo" in self.info_dict:
+            ret = (self.info_dict["tempo"].bpm, self.info_dict["tempo"].mpqn)
+        return ret
+    
+    def get_resolution(self):
+        """
+        """
+        return self.pattern.resolution
+        
+    def get_time_signature(self):
+        """
+        """
+        #TODO
+        pass
+        
+    @staticmethod
     def extract_meta(meta_track):
         """
         Extracts meta-information from the meta_track (normally is the first 

@@ -6,6 +6,7 @@ import time
 
 import pygame
 import pygame.midi
+
 import pygame.fastevent
 
 import director
@@ -16,11 +17,16 @@ def setup():
     """
     sets up many things needed previous the game starting
     """
+    # setup mixer to avoid sound lag
+    pygame.mixer.pre_init(44100, -16, 2, 2048) 
+    #pygame
     pygame.init()
     #time.sleep(0.2) #just in case ... ?
     pygame.fastevent.init()
+    #midi
     pygame.midi.init()
-
+    #sound
+    #pygame.mixer.init()
 
 
 def teardown():
@@ -28,7 +34,8 @@ def teardown():
     finishes everything that has to be ended before game exit
     """
     pygame.midi.quit()
-
+    pygame.quit()
+    
 
 def process_event(event):
     """
@@ -47,6 +54,5 @@ if __name__=="__main__":
     setup()
     main()
     teardown()
-    pygame.quit()
     sys.exit()
 
