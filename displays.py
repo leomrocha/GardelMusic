@@ -131,12 +131,13 @@ class NoteSprite(pygame.sprite.Sprite):
         
         if self.displacement == Displacement.VERTICAL_DOWN:
             #check it went out of the screen (to the bottom)
-            if y > (y)>(py+ph):
+            if y >(py+ph):
                 # turn of midi if active
                 if self.state == ButtonStates.pressed:
                     self.on_note_release()
                 #erase from all the display groups
-                self.remove(*self.groups)
+                #self.remove(*self.groups)
+                self.kill()
             #check turn midi_on
             elif self.state == ButtonStates.passive and (y+h)>(py+ph):
                 self.on_note_press()
