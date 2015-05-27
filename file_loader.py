@@ -50,23 +50,6 @@ def load_midi_to_play(fname):
 #####
 #midi file analyzer
 #####
-def analyse_midi(fname):
-    """
-    Loads and analyses the given file creating a description of the file with:
-    * the pattern object
-    * a dict containing all the metainfo of the file
-    * a list of tracks
-       - each track contains a list of events
-       - the events are ordered by time|tick
-       - the tick time is absolute
-    """
-    #TODO
-    pattern = midi.read_midifile("../../tests_midi/python-midi/mary.mid")
-    info_dict = {}
-    tracks = []
-    #TODO make the analysis
-    return (pattern, info_dict, tracks)
-    
 
 def is_note_on(event):
     """
@@ -161,58 +144,117 @@ class AssociatedEvents(object):
             return self.data[1].tick
         return -1
 
-def associate_events(track):
+
+class MidiInfo(object):
     """
-    for the given track (as output from analyse_midi) creates pairs of associated events (note_on, note_off)
-    
-    track: an absolute tick ordered list of midi events (Track object from python-midi)
-    
-    returns: an ordered (by tick|time) list of the associated events
+    * the pattern object
+    * a dict containing all the metainfo of the file
+    * a list of tracks
+       - each track contains a list of events
+       - the events are ordered by time|tick
+       - the tick time is absolute
+
     """
-    #all the associations    
-    associations = []
-    #associations in progress of being built
-    in_progress = [None for i in range(128)]
-    
-    for e in track:
-        #print e
-        if is_note_off(e):
-            if in_progress[e.pitch] is None:
-                print "NoteOffEvent without previous NoteOnEvent: ", e
+    def __init__(self, fname):
+        """
+        fname: the file path to read
+        """
+        self.pattern = midi.read_midifile(fname)
+        #TODO check that the pattern is valid
+        self.info_dict = self.extract_meta(self.pattern[0])
+        self.tracks = []
+        #TODO make the track analysis
+        self.pattern.make_ticks_abs()
+        #make ticks absolute
+        for t in self.pattern[1:]:
+            self.tracks.append(self.associate_events(t))
+
+    @staticmethod        
+    def extract_meta(meta_track):
+        """
+        Extracts meta-information from the meta_track (normally is the first 
+        track located, i.e. : the pattern[0] track
+        """
+        info = {}
+        info["extra"] = []
+        for e in meta_track:
+            if isinstance(e, midi.TimeSignatureEvent):
+                info["time_signature"] = e
+            elif isinstance(e, midi.KeySignatureEvent):
+                info["key_signature"] = e
+            elif isinstance(e, midi.SetTempoEvent):
+                info["tempo"] = e
+            elif isinstance(e, midi.SmpteOffsetEvent):
+                info["smpte_offset"] = e
+            elif isinstance(e, midi.InstrumentNameEvent):
+                info["instrument"] = e
             else:
-                ae = in_progress[e.pitch]
-                try:
-                    ae.note_off = e
-                    associations.append(ae)
-                    in_progress[e.pitch] = None
-                except Exception as e:
-                    print e
-                    
-        elif is_note_on(e):
-            #verify that the note is already OFF, (no note should be activated Twice without being turned off ... TODO check this assumption
-            if in_progress[e.pitch] is not None:
-                print "Double NoteOnEvent without NoteOffEvent: ", in_progress[e.pitch].note_on, e
-            #create new association
-            ae = AssociatedEvents()
-            ae.note_on = e
-            in_progress[e.pitch] = ae
-        else:
-            #print "is NOT a note event: ", e
-            pass
+                info["extra"].append(e)
+        return info        
     
-    #TODO order by initial tick time (the result of the algorithm is note off time ..)
-    
-    
-    #verify that all the events are matched
-    for i in in_progress:
-        if i is not None:
-            print "ERROR, there are missing associations: ", i, i.note_on, i.note_off
+    @staticmethod
+    def associate_events(track):
+        """
+        for the given track (as output from analyse_midi) creates pairs of associated events (note_on, note_off)
         
-    return associations
+        track: an absolute tick ordered list of midi events (Track object from python-midi)
+        
+        returns: an ordered (by tick|time) list of the associated events
+        """
+        #all the associations    
+        associations = []
+        #associations in progress of being built
+        in_progress = [None for i in range(128)]
+        
+        for e in track:
+            #print e
+            if is_note_off(e):
+                if in_progress[e.pitch] is None:
+                    print "NoteOffEvent without previous NoteOnEvent: ", e
+                else:
+                    ae = in_progress[e.pitch]
+                    try:
+                        ae.note_off = e
+                        associations.append(ae)
+                        in_progress[e.pitch] = None
+                    except Exception as e:
+                        print e
+                        
+            elif is_note_on(e):
+                #verify that the note is already OFF, (no note should be activated Twice without being turned off ... TODO check this assumption
+                if in_progress[e.pitch] is not None:
+                    print "Double NoteOnEvent without NoteOffEvent: ", in_progress[e.pitch].note_on, e
+                #create new association
+                ae = AssociatedEvents()
+                ae.note_on = e
+                in_progress[e.pitch] = ae
+            else:
+                #print "is NOT a note event: ", e
+                pass
+        
+        #TODO order by initial tick time (the result of the algorithm is note off time ..)
+        
+        
+        #verify that all the events are matched
+        for i in in_progress:
+            if i is not None:
+                print "ERROR, there are missing associations: ", i, i.note_on, i.note_off
+            
+        return associations
+
+
+def analyse_midi(fname):
+    """
+    Loads and analyses the given file creating a description returning a
+    MidiInfo object
+    """
+    return MidiInfo(fname)
 
 
 #####
 #midi file writer
 #####
+
+#TODO
 
 
