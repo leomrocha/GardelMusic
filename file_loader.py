@@ -125,7 +125,7 @@ class AssociatedEvents(object):
         returns True if contains a note_on and a note_off event 
         where note_off 
         """
-        return None not in self.data
+        return self.data[0] is not None and self.data[1] is not None 
     
     def get_pitch(self):
         """
@@ -142,6 +142,24 @@ class AssociatedEvents(object):
         if self.data[0] is not None and self.data[1] is not None:
             return self.data[1].tick - self.data[0].tick
         return 0
+    
+    def get_init_tick(self):
+        """
+        Returns NoteOnEvent tick
+        if no data available, returns -1
+        """
+        if self.data[0] is not None:
+            return self.data[0].tick
+        return -1
+
+    def get_end_tick(self):
+        """
+        Returns NoteOffEvent tick
+        if no data available, returns -1
+        """
+        if self.data[1] is not None:
+            return self.data[1].tick
+        return -1
 
 def associate_events(track):
     """
@@ -149,9 +167,7 @@ def associate_events(track):
     
     track: an absolute tick ordered list of midi events (Track object from python-midi)
     
-    returns an ordered (by tick|time) list of the associated events
-    
-    
+    returns: an ordered (by tick|time) list of the associated events
     """
     #all the associations    
     associations = []
