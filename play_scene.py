@@ -70,6 +70,7 @@ class PlayScene(object):
         #
         #TEST - this is AWFUL
         fname = "../../tests_midi/python-midi/mary.mid"
+        #fname = "assets/midi/yiruma-river_flows_in_you.mid"
         self.level_info = MidiInfo(fname)
         
         keyboard_map = self.instrument.keyboard_map
@@ -105,18 +106,21 @@ class PlayScene(object):
         """
         if not screen:
             screen = self.screen
-
-        self._draw_display()
-
+        #if True:
         if self.dirty:
             self._draw_background()
-            self._draw_instrument()
-            self._draw_scoreboard()
-            self._draw_menu()
+            #self._draw_display()
+            #self._draw_instrument()
+            #self._draw_scoreboard()
+            #self._draw_menu()
             self.play_button.dirty = True
             self.play_button.on_draw(screen)
             self.dirty = False
-        
+        self._draw_display()
+        self._draw_instrument()
+        self._draw_scoreboard()
+        self._draw_menu()
+
     def _draw_background(self):
         """
         Scene background

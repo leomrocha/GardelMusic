@@ -41,16 +41,34 @@ REF_NUMBER_KEYS = 88
 ################################################################################
 
 
+class Displacement(object):
+    """
+    Enum types of displacement
+    the name indicates the axis and the direction
+    """
+    VERTICAL_DOWN = 'vertical_down'
+    VERTICAL_UP = 'vertical_up'
+    HORIZONTAL_LEFT = 'horizontal_down'
+    HORIZONTAL_RIGHT = 'horizontal_right'
+
 class NoteSprite(pygame.sprite.Sprite):
     """
     """
-    def __init__(self, size, pos, midi_id, tick_start, tick_end, midi_publish, synesthesia):
+    def __init__(self, parent_rect, size, pos, midi_id, tick_start, tick_end, midi_publish, synesthesia, displacement=Displacement.VERTICAL_DOWN):
         """
         """
         super(NoteSprite, self).__init__()
         
         self.images = []
         
+        #used to be able to know 
+        #   if the note has to be removed from parent (when gets out of scope, to avoid using rendering resources)
+        #   when the events note_on and note_off have to be launched (this is not the best timing method, but it might work for a demo)
+        self.parent_rect = parent_rect
+        #axis and direction of the displacement
+        self.displacement = displacement
+        #
+        #note information ... maybe will be updated to include name and other informations as flat or sharp
         self.midi_id = midi_id
         self.key_id = midi_id  % 12
         self.octave = midi_id / 12
@@ -93,6 +111,45 @@ class NoteSprite(pygame.sprite.Sprite):
         #note state
         self.state = ButtonStates.passive
 
+    def _evaluate_visibility(self):
+        """
+        Check if the note has to be removed from parent 
+        (when gets out of scope, to avoid using rendering resources)
+        """
+        pass
+        
+    def _evaluate_midi_event(self):
+        """
+        when the events note_on and note_off have to be launched 
+        (this is not the best timing method, but it might work for a demo)
+        when touches bottom
+        """
+        #TODO make this method generic for any kind of movement, 
+        #for the moment will be only vertical movement
+        px,py,pw,ph = self.parent_rect
+        x,y,w,h = self.rect
+        
+        if self.displacement == Displacement.VERTICAL_DOWN:
+            #check it went out of the screen (to the bottom)
+            if y > (y)>(py+ph):
+                # turn of midi if active
+                if self.state == ButtonStates.pressed:
+                    self.on_note_release()
+                #erase from all the display groups
+                self.remove(*self.groups)
+            #check turn midi_on
+            elif self.state == ButtonStates.passive and (y+h)>(py+ph):
+                self.on_note_press()
+        elif self.displacement == Displacement.VERTICAL_UP:
+            #TODO
+            pass
+        elif self.displacement == Displacement.HORIZONTAL_LEFT:
+            #TODO
+            pass            
+        elif self.displacement == Displacement.HORIZONTAL_RIGHT:
+            #TODO
+            pass
+            
     def move(self, vector):
         """
         vector = (x,y) movement
@@ -103,12 +160,15 @@ class NoteSprite(pygame.sprite.Sprite):
         self.rect.y = self.y
         #Subpixel calculations IMPORTANT
         #without this, the pygame renderer acts differently when coordinates are:
-        #                    negative (negative_coord+1.7 == negative_coord +2 )
-        #                    positive (positive_coord+1.7 == positive_coord +1 )
+        #                    negative (negative_coord+1.x == negative_coord +2 )
+        #                    positive (positive_coord+1.x == positive_coord +1 )
         #there is the need to make this better, also this library helps at easing
         #for all animations
         self.image_on = self.subpixel_image_on.at(self.x, self.y)
         self.image_off = self.subpixel_image_off.at(self.x, self.y)
+        
+        self._evaluate_visibility()
+        self._evaluate_midi_event()
         
     def on_draw(self, scene):
         """
@@ -221,6 +281,8 @@ class PlayerVerticalDisplay(object):
         """
         function to find out a bug that makes some elements move faster than others up to one point
         this is SLOOOW
+        This problem ws fixed with the subpixel library and was due to pygame doing differently 
+        the sum when values are negative and when values are positive (rounding error I imagine)
         """
         
         for i in range(len(self.notes)-1):
@@ -231,6 +293,7 @@ class PlayerVerticalDisplay(object):
                     print "collision detected at time: ", self.last_update
                     print "n1:  ", n1.midi_id, n1.tick_start, n1.tick_end, n1.rect
                     print "n:  ", n2.midi_id, n2.tick_start, n2.tick_end, n2.rect
+                    
     def on_update(self):
         """
         """
@@ -246,13 +309,15 @@ class PlayerVerticalDisplay(object):
             #print "#############################"
             #print delta, vmove, len(self.notes)
             #for all notes, move them
-            for n in self.notes:
+            #for n in self.notes:
+            for n in self.notes_group.sprites():
                 #print n, n.midi_id
                 n.move((0,vmove))
                 #print "displacement:  ", n.midi_id, n.tick_start, n.tick_end, n.rect
             #print "#############################"
             self.updating = False
-        self.__verify_overlap()
+        
+        #self.__verify_overlap()
         
     def on_draw(self, screen):
         """
@@ -272,9 +337,16 @@ class PlayerVerticalDisplay(object):
     def on_event(self, event):
         """
         """
-        #TODO make this more efficient, for the moment is doing a loop on every note
-        for n in self.notes:
-            n.on_event(event)
+        
+        
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            #TODO make this more efficient, for the moment is doing a loop on every note
+            #should calculate which notes are better to call in an efficient way
+            #for n in self.notes:
+            for n in self.notes_group.sprites():
+                n.on_event(event)
+        #TODO make call to the right notes if the event is an input midi_event .. 
+        pass
 
     def __find_note_in_mapping(self, midi_id, keyboard_map):
         """
@@ -312,7 +384,7 @@ class PlayerVerticalDisplay(object):
 
         #print "kb map", keyboard_map
         key_size = keyboard_map["key_size"]
-
+        #TODO show loader overlay
         #now generate notes sprites
         for track in midi_info.tracks:
             for ae in track:
@@ -333,17 +405,17 @@ class PlayerVerticalDisplay(object):
                     height = self.size[1] * sec_duration / self.vtime
                     size = [note_map['size'][0], height]
                     #negative y position (above the display) 
-                    ypos = - (self.size[1] * sec_start / self.vtime) - height + self.pos[1] + 800
+                    ypos = - (self.size[1] * sec_start / self.vtime) - height + self.pos[1]
                     #ypos = - (self.pos[1] * sec_start / self.vtime) -height + self.pos[1]
                     pos = (note_map['pos'][0], ypos)
-                    note = NoteSprite(size, pos, midi_id, tick_start, tick_end, self.midi_publish, note_map['synesthesia'])
+                    note = NoteSprite(self.rect, size, pos, midi_id, tick_start, tick_end, self.midi_publish, note_map['synesthesia'])
                     synesthesia = note_map['synesthesia']
                     #
                     self.notes.append(note)
                     self.notes_group.add(note)
                     #print "note ", midi_id, sec_duration, tick_duration, sec_start, tick_start, sec_end, tick_end, synesthesia, size, pos
-                    print "note ", midi_id, tick_start, tick_end, size, pos
-                    
+                    #print "note ", midi_id, tick_start, tick_end, size, pos
+        #TODO hide/erase loader overlay
 
 ################################################################################
 class PlayerHorizontalDisplay(object):
