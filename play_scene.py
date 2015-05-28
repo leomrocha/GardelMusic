@@ -37,7 +37,7 @@ class PlayScene(object):
         #self.instrument = KeyboardSprite()
         self.instrument = Keyboard(self.screen, midi_pubsub=self.midi_pubsub, pos=(0, self.h-300), width=self.w)
         
-        self.player_display = PlayerVerticalDisplay(self.screen, size=(int(1040 * self.w /1060. ), self.h -400), pos=(0, 100))
+        self.player_display = PlayerVerticalDisplay(self.screen, self.midi_pubsub, size=(int(1040 * self.w /1060. ), self.h -400), pos=(0, 100))
         #self.instrument_group = pygame.sprite.Group()
         #self.instrument_group.add(self.instrument)
         #TEST        

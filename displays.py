@@ -241,13 +241,14 @@ class PlayerVerticalDisplay(object):
     input format: MIDI
     TODO add annotations (for hand and 
     """
-    def __init__(self, screen, size, pos=(0,0)):
+    def __init__(self, screen, midi_pubsub, size, pos=(0,0)):
         """
         """
         self.screen = screen
         self.pos = pos
         self.size = size
         
+        self.midi_pubsub = midi_pubsub
         #Bak=ckground Image        
         bkg = pygame.image.load("assets/images/displays/vertical_display_lines.png").convert_alpha()
         
@@ -266,6 +267,11 @@ class PlayerVerticalDisplay(object):
         #vertical time (from note appearing to note desapearing), in seconds (should be configurable)
         self.vtime = 5
 
+        #Keep track of the play time
+        self.current_time = 0
+        #keep track of the displacement
+        self.current_displacement = 0
+        #timestamp of last update
         self.last_update = time.time()
         self.playing = False
         #updating, to avoid interruption of the function ... ??
@@ -278,47 +284,49 @@ class PlayerVerticalDisplay(object):
     def pause(self):
         self.playing = False
         
-    def __verify_overlap(self):
+    #def __verify_overlap(self):
+    #    """
+    #    function to find out a bug that makes some elements move faster than others up to one point
+    #    this is SLOOOW
+    #    This problem ws fixed with the subpixel library and was due to pygame doing differently 
+    #    the sum when values are negative and when values are positive (rounding error I imagine)
+    #    """
+    #    
+    #    for i in range(len(self.notes)-1):
+    #        for j in range(i+1,len(self.notes)):
+    #            n1 = self.notes[i]
+    #            n2 = self.notes[j]
+    #            if n1.rect.colliderect(n2.rect):
+    #                print "collision detected at time: ", self.last_update
+    #                print "n1:  ", n1.midi_id, n1.tick_start, n1.tick_end, n1.rect
+    #                print "n:  ", n2.midi_id, n2.tick_start, n2.tick_end, n2.rect
+                 
+                 
+    def on_end_playing(self):
         """
-        function to find out a bug that makes some elements move faster than others up to one point
-        this is SLOOOW
-        This problem ws fixed with the subpixel library and was due to pygame doing differently 
-        the sum when values are negative and when values are positive (rounding error I imagine)
         """
+        print "end playing"
+        self.playing = False
+        #TODO maybe send a signal to parent to tell the rest of the app that this is finihsed???
         
-        for i in range(len(self.notes)-1):
-            for j in range(i+1,len(self.notes)):
-                n1 = self.notes[i]
-                n2 = self.notes[j]
-                if n1.rect.colliderect(n2.rect):
-                    print "collision detected at time: ", self.last_update
-                    print "n1:  ", n1.midi_id, n1.tick_start, n1.tick_end, n1.rect
-                    print "n:  ", n2.midi_id, n2.tick_start, n2.tick_end, n2.rect
-                    
     def on_update(self):
         """
         """
-        #if False:
-        if not self.updating:
-            self.updating = True
+        if self.playing:
             #calculate how much time was elapsed
             now = time.time()
             delta = now - self.last_update
             self.last_update = now
             #calculate vertical movement
             vmove = self.size[1] * delta / self.vtime
-            #print "#############################"
-            #print delta, vmove, len(self.notes)
-            #for all notes, move them
-            #for n in self.notes:
-            for n in self.notes_group.sprites():
+            #check if end play
+            notes = self.notes_group.sprites()
+            if len(notes)<=0:
+                self.on_end_playing()
+                
+            for n in notes:
                 #print n, n.midi_id
                 n.move((0,vmove))
-                #print "displacement:  ", n.midi_id, n.tick_start, n.tick_end, n.rect
-            #print "#############################"
-            self.updating = False
-        
-        #self.__verify_overlap()
         
     def on_draw(self, screen):
         """
@@ -361,7 +369,8 @@ class PlayerVerticalDisplay(object):
         """
         """
         #TODO
-        print "publishing midi event: %s : %d" %(event_type, midi_id)
+        #print "publishing midi event: %s : %d" %(event_type, midi_id)
+        self.midi_pubsub.publish(event_type, midi_id)
         pass
         
     def clean_all(self):

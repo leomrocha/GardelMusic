@@ -39,12 +39,14 @@ class Director:
     
     def __init__(self, start_scene="home_scene"):
 
-        #Setup video system
+        #Setup video system with current video settings
         display_info = pygame.display.Info()
         self.scene_width, self.scene_height = display_info.current_w, display_info.current_h
 
         #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height))
-        self.screen = pygame.display.set_mode((self.scene_width * 9/10, self.scene_height * 9/10))
+        self.screen = pygame.display.set_mode((self.scene_width * 8/10, self.scene_height * 8/10))
+        #activate when the game is ready for playing
+        #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height), pygame.FULLSCREEN, 32)
 
         #self.screen = pygame.display.set_mode((1600, 900), RESIZABLE)
         #self.screen = pygame.display.set_mode((1060, 500))
@@ -106,6 +108,7 @@ class Director:
         while not self.quit_flag:
             time = self.clock.tick(100)
             
+            
             # EXIT process
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -130,6 +133,11 @@ class Director:
             
             self.display_fps()
             pygame.display.flip()
+            #####BEGIN  reminder
+            #here only to remember event handling is important
+            #pump, in case the events are not treated, i.e. I turn off pygame.event.get()
+            #pygame.event.pump()
+            ##END reminder
 
     def _set_scene(self, scene):
         "Changes the current scene to the one given by OBJECT"

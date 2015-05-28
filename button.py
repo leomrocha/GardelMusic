@@ -38,6 +38,8 @@ class Button(pygame.sprite.DirtySprite):
         image_active= image that will be shown on button active
         text to display on top of the image: NOT IMPLEMENTED YET
         """
+        super(Button, self).__init__()
+
         self.screen = screen
         self.on_press_callback = on_press_callback
         self.on_hover_callback = on_hover_callback
@@ -121,3 +123,62 @@ class Button(pygame.sprite.DirtySprite):
             screen.blit(self.current_button, self.pos)
             self.dirty = False
 
+
+class ToggleButton(Button):
+    """
+    Button that on click changes state, 
+    """
+    def __init__(self, screen, 
+                       on_toggle_callback=None,
+                       size=(50,50), pos=(0,0), 
+                       image_passive=os.path.join("assets","images","icons","ic_play_circle_big_normal_o.png"),
+                       #image_hover=os.path.join("assets","images","icons","ic_play_circle_normal_o.png"),
+                       image_active=os.path.join("assets","images","icons","ic_play_circle_pressed_o.png"),
+                       text=None):
+        #call super init
+        super(ToggleButton, self).__init__(screen,size, pos, image_passive, image_hover, image_active, text=None)
+        self.on_toggle_callback = on_toggle_callback
+        
+    def on_toggle(self):
+        """
+        Toggles button state
+        """
+        if self.current_state = ButtonStates.pressed:
+            self.deactivate()
+        elif self.current_state = ButtonStates.passive:
+            self.activate()
+        else:
+            print "error on_toggle, invalid state"
+            pass
+            
+        self.on_toggle_callback(self.current_state)
+            
+    def deactivate(self):
+        """
+        Dectivates the button, no callback is called
+        """
+        self.current_state = ButtonStates.passive
+        self.current_button = self.img_passive
+            
+    def activate(self):
+        """
+        Activates the button, no callback is called
+        """
+        self.current_state = ButtonStates.pressed
+        self.current_button = self.img_active
+            
+    def on_event(self, event):
+        """
+        """
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                #print "mouse button pressed"
+                self.current_button = self.img_pressed
+                self.dirty = True
+                
+            elif event.type == pygame.MOUSEBUTTONUP:
+                #print "mouse button released"
+                self.on_toggle()
+                self.dirty = True
+                
+        
