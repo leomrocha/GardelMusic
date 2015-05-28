@@ -88,13 +88,13 @@ class NoteSprite(pygame.sprite.Sprite):
         self.rect = pygame.Rect([self.x,self.y,w,h])
 
         #create and append the pressed image with the same size as the background image
-        self.image_off = pygame.Surface([self.rect.width, self.rect.height], pygame.HWSURFACE)
+        self.image_off = pygame.Surface([self.rect.width, self.rect.height], pygame.HWSURFACE, 32)
         #replacement with subpixel library
         self.image_off.set_alpha(128)
         self.image_off.fill(self.synesthesia)
         self.subpixel_image_off = SubPixelSurface(self.image_off, 5, 5)
         
-        self.image_on = pygame.Surface([self.rect.width, self.rect.height], pygame.HWSURFACE)
+        self.image_on = pygame.Surface([self.rect.width, self.rect.height], pygame.HWSURFACE, 32)
         #self.image_off.set_alpha(255)
         self.image_on.fill(self.synesthesia)
         self.subpixel_image_on = SubPixelSurface(self.image_on , 5, 5)

@@ -66,18 +66,20 @@ class KeySprite(pygame.sprite.DirtySprite):
         #append rest image        
         self.images.append(self.image)
         
-        #current image index
-        self.image_index = 0
         
         #print synesthesia
-        
-        
         self.rect = pygame.Rect(self.image.get_rect())
         #create and append the pressed image with the same size as the background image
-        self.pressed_image = pygame.Surface([self.rect.width, self.rect.height])
+        self.pressed_image = pygame.Surface([self.rect.width, self.rect.height], pygame.HWSURFACE, 32)
+        self.pressed_image.set_alpha(255)
         self.pressed_image.fill(self.synesthesia)
         
         self.images.append(self.pressed_image)
+
+        #current image index
+        self.image_index = 0
+        #start showing the passive image
+        self.image = self.images[self.image_index]
         
         #update key position
         self.rect.x = pos[0]
@@ -85,6 +87,7 @@ class KeySprite(pygame.sprite.DirtySprite):
         
         #key state # from ButtonStates ('rest' | 'pressed')
         self.state = ButtonStates.passive
+        self.dirty = True
         
     def on_key_press(self):
         """
@@ -101,16 +104,22 @@ class KeySprite(pygame.sprite.DirtySprite):
         self.midi_publish("note_off", self.midi_id)
         self.on_note_off()
         
-    def on_note_on(self, finger=0):
+        
+    def on_note_on(self, velocity=255):
         """
         Key activation
         """
         #draw the colored overlay
-        
         #if finger >=1 && <=5 also overlay the finger id on the key
         self.state = ButtonStates.pressed
         self.image_index = 1
+        #make only a few ranges in velocity transparency, this helps visualization
+        #this  creates 5 ranges.
+        #velocity = (velocity / 50 ) * 50 + 8
+        #self.pressed_image.set_alpha(20)
+        #self.pressed_image.fill(self.synesthesia)
         #TODO WARNING, see how this should be updated ... not sure if here
+        self.dirty = True
         self.on_update()
         
     def on_note_off(self):
@@ -119,13 +128,17 @@ class KeySprite(pygame.sprite.DirtySprite):
         self.state = ButtonStates.passive
         self.image_index = 0
         #TODO WARNING, see how this should be updated ... not sure if here
+        self.dirty = True
         self.on_update()
+        
         
     def on_update(self):
         """
         """
-        #print "calling on_update", self.image_index
-        self.image = self.images[self.image_index]
+        if self.dirty:
+            #print "calling on_update", self.image_index
+            self.image = self.images[self.image_index]
+            self.dirty = False
         
         
     def on_event(self, event=None):
@@ -144,11 +157,13 @@ class KeySprite(pygame.sprite.DirtySprite):
             elif self.state == ButtonStates.pressed and  event.type == pygame.MOUSEBUTTONUP:
                 #print "mouse button released"
                 self.on_key_release()
-        #mouse is gone from the key
+            self.on_update()
+        #FIXME TODO-> this following check causes the flickering on mouse move when the key is 
+        # activated through MIDI signal!!!!!!!! -> find out how to solve it
+        #mouse is gone from the key 
         elif self.state == ButtonStates.pressed:
             self.on_key_release()
-        
-        self.on_update()
+            self.on_update()
         
     def on_draw(self):
         """
@@ -255,9 +270,10 @@ class Keyboard(object):
         """
         #print "note on received: ", event
         note = event.data1
+        velocity = event.data2
         index = note - self.KEY_RANGE[0]
         key = self.keys[index]
-        key.on_note_on()
+        key.on_note_on(velocity)
         
     def on_note_off(self, event):
         """
@@ -316,10 +332,12 @@ class Keyboard(object):
 
         self.background = pygame.sprite.Sprite()
         self.background.image = pygame.Surface((kb_width, kb_height))
-        self.background.image.fill((26,26,26))     # fill white
+        self.background.image.fill((26,26,26))     # fill black
+        #self.background.image.fill((250,250,250))     # fill white ->should make a white background behind the keys for the transparency to work well, but black behind it to fill the borders in black
         self.background.rect = self.background.image.get_rect()
         self.background.rect.x = pos[0]
         self.background.rect.y = pos[1]
+        self.rect = self.background.rect
         self.allgroups.add(self.background)
         
     
@@ -349,32 +367,35 @@ class Keyboard(object):
         
     def on_event(self, event):
     
-        #TODO make this efficient
-        collitions = []
-        for k in self.keys:
-            if k.rect.collidepoint(pygame.mouse.get_pos()):
-                collitions.append(k)
-        #there should be only 2 collitions max (one white and one black)
-        assert(len(collitions) >=0 and len(collitions) <=2)
-        #update state of active keys - this fixes the problem on hover out while mouse button pressed
-        for k in self.active_keys:
-            k.on_event(event)
-            #eliminate keys that have been deactivated from the active_keys
-            if k.state == ButtonStates.passive:
-                self.active_keys.remove(k)
-        #if more than one collition, only activate the black key
-        if len(collitions) > 1:
-            for k in collitions:
-                if k.key_color == 'black':
+        #check if it touches the keyboard at least
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            #print "collides"
+            #TODO make this efficient
+            collitions = []
+            for k in self.keys:
+                if k.rect.collidepoint(pygame.mouse.get_pos()):
+                    collitions.append(k)
+            #there should be only 2 collitions max (one white and one black)
+            assert(len(collitions) >=0 and len(collitions) <=2)
+            #update state of active keys - this fixes the problem on hover out while mouse button pressed
+            for k in self.active_keys:
+                k.on_event(event)
+                #eliminate keys that have been deactivated from the active_keys
+                if k.state == ButtonStates.passive:
+                    self.active_keys.remove(k)
+            #if more than one collition, only activate the black key
+            if len(collitions) > 1:
+                for k in collitions:
+                    if k.key_color == 'black':
+                        k.on_event(event)
+                        #keep track of pressed keys
+                        if k.state == ButtonStates.pressed:
+                            self.active_keys.append(k)
+            else:
+                for k in collitions:
                     k.on_event(event)
-                    #keep track of pressed keys
                     if k.state == ButtonStates.pressed:
                         self.active_keys.append(k)
-        else:
-            for k in collitions:
-                k.on_event(event)
-                if k.state == ButtonStates.pressed:
-                    self.active_keys.append(k)
         
     def on_mouse_down(self, pos):
         """
