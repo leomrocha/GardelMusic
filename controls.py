@@ -5,7 +5,26 @@ Controls, for game play
 
 from button import ToggleButton
 
-class DisplaySelect(object):
+################################################################################
+#Abstract Menu
+################################################################################
+
+class AbstractMenu(object):
+    """
+    """
+    #TODO
+    pass
+
+
+class ToggleMenu(AbstractMenu):
+    """
+    """
+    #TODO
+    pass
+################################################################################
+#Display Selection
+################################################################################
+class DisplaySelect(ToggleMenu):
     """
     Contains the buttons fo rdisplay selection
     """
@@ -26,7 +45,7 @@ class DisplaySelect(object):
         pass
         
 
-class DefaultDisplaySelect(object):
+class DefaultDisplaySelect(DisplaySelect):
     """
     A default display selection tool that contains 3 types of displays:
     Vertical
@@ -42,3 +61,9 @@ class DefaultDisplaySelect(object):
                     ]
         super(DefaultDisplaySelect, self).__init__(screen,size, pos, on_display_select_callback, display_list)
         
+################################################################################
+#Instrument Selection
+################################################################################
+
+
+

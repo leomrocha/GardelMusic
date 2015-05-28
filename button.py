@@ -143,9 +143,9 @@ class ToggleButton(Button):
         """
         Toggles button state
         """
-        if self.current_state = ButtonStates.pressed:
+        if self.current_state == ButtonStates.pressed:
             self.deactivate()
-        elif self.current_state = ButtonStates.passive:
+        elif self.current_state == ButtonStates.passive:
             self.activate()
         else:
             print "error on_toggle, invalid state"

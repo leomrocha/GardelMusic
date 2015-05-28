@@ -235,24 +235,26 @@ class NoteSprite(pygame.sprite.Sprite):
 
 ################################################################################
 
-class PlayerVerticalDisplay(object):
+class AbstractDisplay(object):
     """
-    display that shows a given file
-    input format: MIDI
-    TODO add annotations (for hand and 
     """
-    def __init__(self, screen, midi_pubsub, size, pos=(0,0)):
+    def __init__(self, screen, midi_pubsub, background_image, size, pos=(0,0), screen_time=10):
         """
-        """
+        screen, 
+        midi_pubsub, 
+        background_image, already loaded pygame bakground image
+        size, 
+        pos=(0,0)
+        screen_time=10  ##represents the time that the screen (height or width according to the display type)
+                        ## i.e. it represents in play time (the time that a note will take to pass over the screen
+        """    
         self.screen = screen
         self.pos = pos
         self.size = size
         
         self.midi_pubsub = midi_pubsub
-        #Bak=ckground Image        
-        bkg = pygame.image.load("assets/images/displays/vertical_display_lines.png").convert_alpha()
-        
-        self.background = pygame.transform.scale(bkg, size)
+
+        self.background = pygame.transform.scale(background_image, size)
         self.rect = self.background.get_rect() # use image extent values
         self.rect.topleft = pos
         
@@ -264,9 +266,9 @@ class PlayerVerticalDisplay(object):
         NoteSprite.groups = self.allgroups, self.notes_group
         
         self.notes = []
-        #vertical time (from note appearing to note desapearing), in seconds (should be configurable)
-        self.vtime = 5
 
+        #Default
+        self.screen_time = screen_time
         #Keep track of the play time
         self.current_time = 0
         #keep track of the displacement
@@ -278,56 +280,51 @@ class PlayerVerticalDisplay(object):
         self.updating = False
                 
     def play(self):
+        """
+        """
         self.playing = True
         self.last_update = time.time()
                 
     def pause(self):
+        """
+        """
         self.playing = False
         
-    #def __verify_overlap(self):
-    #    """
-    #    function to find out a bug that makes some elements move faster than others up to one point
-    #    this is SLOOOW
-    #    This problem ws fixed with the subpixel library and was due to pygame doing differently 
-    #    the sum when values are negative and when values are positive (rounding error I imagine)
-    #    """
-    #    
-    #    for i in range(len(self.notes)-1):
-    #        for j in range(i+1,len(self.notes)):
-    #            n1 = self.notes[i]
-    #            n2 = self.notes[j]
-    #            if n1.rect.colliderect(n2.rect):
-    #                print "collision detected at time: ", self.last_update
-    #                print "n1:  ", n1.midi_id, n1.tick_start, n1.tick_end, n1.rect
-    #                print "n:  ", n2.midi_id, n2.tick_start, n2.tick_end, n2.rect
-                 
-                 
+    def stop(self):
+        """
+        """
+        self.playing = False
+        #TODO set time to 0
+        #TODO reset notes positions
+        pass
+
+    def step_forward(self, secs):
+        """
+        secs = seconds to go forward
+        """
+        print "going forwards  %d secs" %secs
+        pass
+    
+    def step_back(self, secs):
+        """
+        secs = seconds to go back
+        """
+        print "going backwards  %d secs" %secs
+        pass
+        
     def on_end_playing(self):
         """
         """
         print "end playing"
         self.playing = False
         #TODO maybe send a signal to parent to tell the rest of the app that this is finihsed???
+
         
     def on_update(self):
         """
         """
-        if self.playing:
-            #calculate how much time was elapsed
-            now = time.time()
-            delta = now - self.last_update
-            self.last_update = now
-            #calculate vertical movement
-            vmove = self.size[1] * delta / self.vtime
-            #check if end play
-            notes = self.notes_group.sprites()
-            if len(notes)<=0:
-                self.on_end_playing()
-                
-            for n in notes:
-                #print n, n.midi_id
-                n.move((0,vmove))
-        
+        raise NotImplemented("on_update not implemented, MUST subclass it")
+
     def on_draw(self, screen):
         """
         """
@@ -340,8 +337,6 @@ class PlayerVerticalDisplay(object):
         self.notes_group.clear(screen, self.background)
         self.notes_group.update()
         self.notes_group.draw(screen)
-
-        pass
         
     def on_event(self, event):
         """
@@ -356,6 +351,32 @@ class PlayerVerticalDisplay(object):
                 n.on_event(event)
         #TODO make call to the right notes if the event is an input midi_event .. 
         pass
+
+    def _get_note_displacement(self, delta_time):
+        """
+        calculates the displacement of the note corresponding to a delta time,
+        this is abstract for every display to implement it's own
+        """
+        raise NotImplemented("_get_note_displacement not implemented, MUST subclass it")
+        
+    def on_update(self):
+        """
+        """
+        if self.playing:
+            #calculate how much time was elapsed
+            now = time.time()
+            delta = now - self.last_update
+            self.last_update = now
+            #calculate vertical movement
+            displacement = self._get_note_displacement(delta)
+            #check if end play
+            notes = self.notes_group.sprites()
+            if len(notes)<=0:
+                self.on_end_playing()
+                
+            for n in notes:
+                #print n, n.midi_id
+                n.move(displacement)
 
     def __find_note_in_mapping(self, midi_id, keyboard_map):
         """
@@ -380,6 +401,16 @@ class PlayerVerticalDisplay(object):
         self.allgroups.empty()
         self.notes_group.empty()
         self.notes[:] = []
+    
+    def _calc_note_size(self, midi_id, sec_duration, note_map):
+        """
+        """
+        raise NotImplemented("_calc_note_size not implemented, MUST subclass it")
+        
+    def _calc_note_pos(self, midi_id, sec_start, sec_duration, sec_end, note_map):
+        """
+        """
+        raise NotImplemented("_calc_note_pos not implemented, MUST subclass it")
         
     def set_midi_info(self, midi_info, keyboard_map):
         """
@@ -412,12 +443,8 @@ class PlayerVerticalDisplay(object):
                 note_map = self.__find_note_in_mapping(midi_id, keyboard_map['keyboard_map'])
                 #print "note found: ", note_map
                 if note_map is not None:
-                    height = self.size[1] * sec_duration / self.vtime
-                    size = [note_map['size'][0], height]
-                    #negative y position (above the display) 
-                    ypos = - (self.size[1] * sec_start / self.vtime) - height + self.pos[1]
-                    #ypos = - (self.pos[1] * sec_start / self.vtime) -height + self.pos[1]
-                    pos = (note_map['pos'][0], ypos)
+                    size = self._calc_note_size(sec_duration, note_map)
+                    pos = self._calc_note_pos(size, sec_start, sec_duration, sec_end, note_map)
                     note = NoteSprite(self.rect, size, pos, midi_id, tick_start, tick_end, self.midi_publish, note_map['synesthesia'])
                     synesthesia = note_map['synesthesia']
                     #
@@ -426,6 +453,63 @@ class PlayerVerticalDisplay(object):
                     #print "note ", midi_id, sec_duration, tick_duration, sec_start, tick_start, sec_end, tick_end, synesthesia, size, pos
                     #print "note ", midi_id, tick_start, tick_end, size, pos
         #TODO hide/erase loader overlay
+
+################################################################################
+
+class PlayerVerticalDisplay(AbstractDisplay):
+    """
+    display that shows a given file
+    input format: MIDI
+    TODO add annotations (for hand and 
+    """
+    def __init__(self, screen, midi_pubsub, size, pos=(0,0)):
+        """
+        """
+        bkg = pygame.image.load("assets/images/displays/vertical_display_lines.png").convert_alpha()
+
+        screen_time = 5
+        super(PlayerVerticalDisplay, self).__init__(screen, midi_pubsub, bkg, size, pos, screen_time)
+                
+    #def __verify_overlap(self):
+    #    """
+    #    function to find out a bug that makes some elements move faster than others up to one point
+    #    this is SLOOOW
+    #    This problem ws fixed with the subpixel library and was due to pygame doing differently 
+    #    the sum when values are negative and when values are positive (rounding error I imagine)
+    #    """
+    #    
+    #    for i in range(len(self.notes)-1):
+    #        for j in range(i+1,len(self.notes)):
+    #            n1 = self.notes[i]
+    #            n2 = self.notes[j]
+    #            if n1.rect.colliderect(n2.rect):
+    #                print "collision detected at time: ", self.last_update
+    #                print "n1:  ", n1.midi_id, n1.tick_start, n1.tick_end, n1.rect
+    #                print "n:  ", n2.midi_id, n2.tick_start, n2.tick_end, n2.rect
+                 
+                 
+    def _get_note_displacement(self, delta_time):
+        """
+        """
+        vmove = self.size[1] * delta_time / self.screen_time
+        return (0, vmove)
+
+    def _calc_note_size(self, sec_duration, note_map):
+        """
+        """
+        height = self.size[1] * sec_duration / self.screen_time
+        size = [note_map['size'][0], height]
+        return size
+
+    def _calc_note_pos(self, size, sec_start, sec_duration, sec_end, note_map):
+        """
+        """
+        height = size[1]
+        #negative y position (above the display) 
+        ypos = - (self.size[1] * sec_start / self.screen_time) - height + self.pos[1]
+        #ypos = - (self.pos[1] * sec_start / self.screen_time) -height + self.pos[1]
+        pos = (note_map['pos'][0], ypos)
+        return pos
 
 ################################################################################
 class PlayerHorizontalDisplay(object):
