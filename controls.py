@@ -67,7 +67,7 @@ class PlaybackControlBar(object):
                             size=bsize, 
                             pos=(pos[0], pos[1]),
                             image_passive=os.path.join("assets","images","icons","ic_backward_circle_big_normal_o.png"),
-                            image_hover=os.path.join("assets","images","icons","ic_orange_circle_big_normal_o.png"),
+                            image_hover=os.path.join("assets","images","icons","ic_backward_circle_big_normal_o.png"),
                             image_active=os.path.join("assets","images","icons","ic_backward_circle_big_pressed_o.png"),
                             )
         self.play_pause = ToggleButton(
@@ -83,9 +83,9 @@ class PlaybackControlBar(object):
                             on_release_callback=on_stop_callback,
                             size=bsize, 
                             pos=(pos[0] + 2 * bw, pos[1]),
-                            image_passive=os.path.join("assets","images","icons","ic_stop_normal_w.png"),
-                            image_hover=os.path.join("assets","images","icons","ic_orange_circle_big_normal_o.png"),
-                            image_active=os.path.join("assets","images","icons","ic_stop_pressed_w.png"),
+                            image_passive=os.path.join("assets","images","icons","ic_stop_circle_normal_w.png"),
+                            image_hover=os.path.join("assets","images","icons","ic_stop_circle_normal_w.png"),
+                            image_active=os.path.join("assets","images","icons","ic_stop_circle_pressed_w.png"),
                             )
 
         self.forward = Button(
@@ -94,7 +94,7 @@ class PlaybackControlBar(object):
                             size=bsize, 
                             pos=(pos[0] + 3* bw, pos[1]),
                             image_passive=os.path.join("assets","images","icons","ic_forward_circle_big_normal_o.png"),
-                            image_hover=os.path.join("assets","images","icons","ic_orange_circle_big_normal_o.png"),
+                            image_hover=os.path.join("assets","images","icons","ic_forward_circle_big_normal_o.png"),
                             image_active=os.path.join("assets","images","icons","ic_forward_circle_big_pressed_o.png"),
                             )
         
