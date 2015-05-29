@@ -16,6 +16,8 @@ from button import Button
 from file_loader import MidiInfo
 
 
+import keyboard_mappings
+
 class PlayScene(object):
     """
     """
@@ -36,16 +38,18 @@ class PlayScene(object):
         """
         #TODO make something more dynamic, for the moment only shows the hardcoded keyboard
         #self.instrument = KeyboardSprite()
-        self.instrument = Keyboard(self.screen, midi_pubsub=self.midi_pubsub, pos=(0, self.h-300), width=self.w)
+        kb_height = keyboard_mappings.get_height(self.w)
+        self.instrument = Keyboard(self.screen, midi_pubsub=self.midi_pubsub, pos=(0, self.h-kb_height), width=self.w)
         
-        self.player_display = PlayerVerticalDisplay(self.screen, self.midi_pubsub, size=(int(1040 * self.w /1060. ), self.h -400), pos=(0, 100))
+        pd_height = self.h - kb_height - 75
+        self.player_display = PlayerVerticalDisplay(self.screen, self.midi_pubsub, size=(int(1040 * self.w /1060. ), pd_height), pos=(0, 75))
         #self.instrument_group = pygame.sprite.Group()
         #self.instrument_group.add(self.instrument)
         #TEST        
         #self.keysprite = KeySprite(midi_id=56, pos=(1200,200) , size=(40,200), color='white', synesthesia=(255,100,100))
         #self.instrument_group.add(self.keysprite)
         self.playback_controls = controls.PlaybackControlBar(screen=self.screen,
-                                                            pos=(self.w - 400 , 10),
+                                                            pos=(self.w - 220 , 10),
                                                             size=(200,50),
                                                             on_backwards_callback=self.on_backwards,
                                                             on_play_toggle_callback=self.on_play_toggle, 

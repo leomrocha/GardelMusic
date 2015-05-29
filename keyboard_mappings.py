@@ -126,7 +126,9 @@ ref_height = 120
 keyboard_range=(21,95)
 
 #current_mappings = {}
-
+def get_height(width):
+    return ref_height * width / ref_width
+    
 #def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.current_colors, width=1060, height=120, padding=(10,10,12.5,7.5)):
 #def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.current_colors, width=1060, height=120):
 def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.current_colors, width=1060, max_height=300):
@@ -172,7 +174,7 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
     #TODO verify that the first and last keys are white or change it by force (eliminate)
         
     
-    height = ref_height * width / ref_width
+    height = get_height(width)
     padding_left = ref_keyboard_padding['left'] * width / ref_width
     padding_right = ref_keyboard_padding['right'] * width / ref_width
     padding_top = ref_keyboard_padding['top'] * width / ref_width

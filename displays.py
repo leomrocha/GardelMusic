@@ -359,7 +359,8 @@ class AbstractDisplay(object):
         """
         print "end playing"
         self.playing = False
-        #TODO maybe send a signal to parent to tell the rest of the app that this is finihsed???
+        self.stop()
+        #TODO send a signal to parent to tell the rest of the app that reproduction ended
         
     def on_update(self):
         """

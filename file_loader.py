@@ -184,7 +184,7 @@ class MidiInfo(object):
         #TODO check that the pattern is valid
         self.info_dict = self.extract_meta(self.pattern[0])
         self.tracks = []
-        #TODO make the track analysis
+        #make the track analysis
         self.pattern.make_ticks_abs()
         #make ticks absolute
         for t in self.pattern[1:]:

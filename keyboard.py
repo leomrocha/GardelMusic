@@ -207,6 +207,10 @@ class Keyboard(object):
     #   - central Do mark (a red dot below the key will be nice for example)
     def __init__(self, screen, midi_pubsub, pos=(0,0), width=1060):
         """
+        screen: the parent screen
+        midi_pubsub
+        pos 
+        width 
         """
         self.KEY_RANGE = (21,108)
         

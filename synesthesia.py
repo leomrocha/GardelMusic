@@ -302,11 +302,11 @@ def get_color(midi_id, color_theme='Steve Zieverink (2004)'):
     #print "this color: ", color    
     if  'format' in theme and theme['format'] == 'HSV':
         h,s,v = color
-        color = colorsys.hsv_to_rgb(h/255., s/100., v/100.)
+        color = colorsys.hsv_to_rgb(h/360., s/100., v/100.)
         color = reformat_color(color)
     elif  'format' in theme and theme['format'] == 'HSL':
         h,s,l = color
-        color = colorsys.hls_to_rgb(h/255., l/100., s/100.)
+        color = colorsys.hls_to_rgb(h/360., l/100., s/100.) #this numbers are the ones encoded in MIDI.JS/Color/SpaceW3.js
         color = reformat_color(color)
     #print "converted color: ", color    
 
