@@ -3,6 +3,7 @@
 Keyboard Widget
 """
 import os
+import math
 import pygame
 
 import keyboard_mappings
@@ -105,18 +106,22 @@ class KeySprite(pygame.sprite.DirtySprite):
         self.on_note_off()
         
         
-    def on_note_on(self, velocity=255):
+    def on_note_on(self, velocity=128):
         """
         Key activation
         """
+        #print "note on id: %d with velocity: %d" %(self.midi_id, velocity)
         #draw the colored overlay
         #if finger >=1 && <=5 also overlay the finger id on the key
         self.state = ButtonStates.pressed
         self.image_index = 1
         #make only a few ranges in velocity transparency, this helps visualization
-        #this  creates 5 ranges.
-        #velocity = (velocity / 50 ) * 50 + 8
-        #self.pressed_image.set_alpha(20)
+        #Note, max velocity = 128, but alpha is 255, so do a transformation, also do it for a few values...
+        #use 127 as base number to have a minimum nice base solor, eliminate all non-int part
+        #velocity = 63 + int(math.ceil((velocity) / 8.)) * 12 # this makes 12 ranges of transparency
+        velocity = 63 + int(math.ceil((velocity) / 4.)) * 6 # this makes 6 ranges of transparency
+        self.pressed_image.set_alpha(velocity)
+        #print velocity
         #self.pressed_image.fill(self.synesthesia)
         #TODO WARNING, see how this should be updated ... not sure if here
         self.dirty = True
@@ -304,9 +309,6 @@ class Keyboard(object):
         key_map = self.keyboard_map['keyboard_map']
         kb_width, kb_height = self.keyboard_map['size']
         padding = self.keyboard_map['padding']
-        self.kb_background = pygame.Surface((kb_width, kb_height))
-        self.kb_background.fill((26,26,26))     # fill white
-        self.kb_background = self.kb_background.convert()  # jpg can not have transparency
         
         self.keys = []
         
@@ -330,6 +332,7 @@ class Keyboard(object):
                 self.white_keys_group.add(ks)
                 #background
 
+        #General background of all the keyboard
         self.background = pygame.sprite.Sprite()
         self.background.image = pygame.Surface((kb_width, kb_height))
         self.background.image.fill((26,26,26))     # fill black
@@ -339,7 +342,16 @@ class Keyboard(object):
         self.background.rect.y = pos[1]
         self.rect = self.background.rect
         self.allgroups.add(self.background)
+        #background of the keys (to be able to handle transparency correctly
+        self.kb_background = pygame.sprite.Sprite()
         
+        self.kb_background.image = pygame.Surface((kb_width - padding['left'] - padding['right'],kb_height - padding['top'] - padding['bottom']))
+        #self.kb_background.fill((26,26,26))     # fill black
+        self.kb_background.image.fill((230,230,240))     # fill white
+        self.kb_background.rect = self.kb_background.image.get_rect()
+        self.kb_background.rect.x = pos[0] + padding['left']
+        self.kb_background.rect.y = pos[1] + padding['top']
+        self.allgroups.add(self.kb_background)
     
     def on_update(self):
         #super(Keyboard, self).update()
@@ -354,11 +366,11 @@ class Keyboard(object):
         
         
         #keys
-        self.white_keys_group.clear(screen, self.kb_background)
+        #self.white_keys_group.clear(screen, self.kb_background)
         self.white_keys_group.update()
         self.white_keys_group.draw(screen)
         
-        self.black_keys_group.clear(screen, self.kb_background)
+        #self.black_keys_group.clear(screen, self.kb_background)
         self.black_keys_group.update()
         self.black_keys_group.draw(screen)
         #self.allkeys.draw(screen)
