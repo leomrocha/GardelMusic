@@ -24,18 +24,18 @@ class MIDIPubSub(object):
         self.input_id = device_count -1
         self.midi_in = pygame.midi.Input( self.input_id )
 
-        print "midi input id = ", self.input_id
-        print "midi in = ", self.midi_in
-        print "midi in info = ", pygame.midi.get_device_info(self.input_id)
+        #print "midi input id = ", self.input_id
+        #print "midi in = ", self.midi_in
+        #print "midi in info = ", pygame.midi.get_device_info(self.input_id)
         
         #self.output_id = pygame.midi.get_default_output_id()
         self.output_id = device_count - 2
         
         self.midi_out = pygame.midi.Output( self.output_id )
         
-        print "midi output id = ", self.output_id
-        print "midi out = ", self.midi_out
-        print "midi out info = ", pygame.midi.get_device_info(self.output_id)
+        #print "midi output id = ", self.output_id
+        #print "midi out = ", self.midi_out
+        #print "midi out info = ", pygame.midi.get_device_info(self.output_id)
         
         self.note_on_subs = []
         self.note_off_subs = []

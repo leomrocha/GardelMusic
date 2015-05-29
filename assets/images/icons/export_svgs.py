@@ -8,7 +8,7 @@ cmd = "inkscape -z -e %s.png -w 250 -h 250 %s/%s.svg"
 lsdir = os.listdir(path)
 for fname in lsdir:
     if '.svg' in fname:
-        if 'blue' in fname:
+        if 'stop' in fname:
             name = fname.replace('.svg','')
             os.system(cmd % (name, path, name))
         

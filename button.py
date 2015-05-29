@@ -4,7 +4,7 @@ Implements a button class
 """
 
 import os
-
+import time
 import pygame
 
 
@@ -59,7 +59,7 @@ class Button(pygame.sprite.DirtySprite):
         self.rect = self.img_passive.get_rect() # use image extent values
         self.rect.topleft = pos
         
-        self.current_button = self.img_passive
+        self.image = self.current_button = self.img_passive
         
         #states
             
@@ -68,12 +68,16 @@ class Button(pygame.sprite.DirtySprite):
         
         #if screen is dirty
         self.dirty = True
+        self.update = self.on_update
                 
        
     def on_update(self):
         """
         """
+        #print "button update"
+        
         if self.dirty:
+            self.image = self.current_button
             self.on_draw()
         self.dirty = False
         pass
@@ -81,6 +85,7 @@ class Button(pygame.sprite.DirtySprite):
     def on_event(self, event):
         #print pygame.mouse.get_pos()
         if self.rect.collidepoint(pygame.mouse.get_pos()):
+            #print "button event"
             #print "mouse over"
             if self.current_state == ButtonStates.passive:
                 self.current_button = self.img_hover
@@ -116,12 +121,14 @@ class Button(pygame.sprite.DirtySprite):
             self.dirty = True
 
     def on_draw(self, screen=None):
-        if not screen:
-            screen = self.screen
-        if self.dirty:
-            #print "drawing screen"
-            screen.blit(self.current_button, self.pos)
-            self.dirty = False
+        
+        #if not screen:
+        #    screen = self.screen
+        #if self.dirty:
+        #    #print "drawing screen"
+        #    screen.blit(self.current_button, self.pos)
+        #    self.dirty = False
+        pass
 
 
 class ToggleButton(Button):
@@ -136,49 +143,53 @@ class ToggleButton(Button):
                        image_active=os.path.join("assets","images","icons","ic_play_circle_pressed_o.png"),
                        text=None):
         #call super init
-        super(ToggleButton, self).__init__(screen,size, pos, image_passive, image_hover, image_active, text=None)
+        super(ToggleButton, self).__init__(screen=screen,size=size, pos=pos, 
+                                           image_passive=image_passive, 
+                                           image_hover=image_passive, 
+                                           image_active=image_active)
+
         self.on_toggle_callback = on_toggle_callback
         
     def on_toggle(self):
         """
         Toggles button state
         """
+        #print "toggling"
         if self.current_state == ButtonStates.pressed:
+            #print "deactivating"
             self.deactivate()
         elif self.current_state == ButtonStates.passive:
+            #print "activating"
             self.activate()
         else:
             print "error on_toggle, invalid state"
             pass
-            
-        self.on_toggle_callback(self.current_state)
+        #self.on_toggle_callback(self.current_state)
+        self.on_toggle_callback()
+        self.dirty = False
             
     def deactivate(self):
         """
         Dectivates the button, no callback is called
         """
         self.current_state = ButtonStates.passive
-        self.current_button = self.img_passive
+        self.image = self.current_button = self.img_passive
+        
             
     def activate(self):
         """
         Activates the button, no callback is called
         """
         self.current_state = ButtonStates.pressed
-        self.current_button = self.img_active
+        self.image = self.current_button = self.img_pressed
             
     def on_event(self, event):
         """
         """
         if self.rect.collidepoint(pygame.mouse.get_pos()):
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                #print "mouse button pressed"
-                self.current_button = self.img_pressed
-                self.dirty = True
-                
-            elif event.type == pygame.MOUSEBUTTONUP:
-                #print "mouse button released"
+            #print "Toggle Event"
+            if event.type == pygame.MOUSEBUTTONUP:
+                #print "toggle mouse button released", time.clock()
                 self.on_toggle()
-                self.dirty = True
                 
         

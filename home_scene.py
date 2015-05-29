@@ -18,6 +18,7 @@ class HomeScene(Scene):
         self.screen = director.screen
         self.w, self.h = director.screen.get_size()
 
+        self.menu_group = pygame.sprite.Group()
         
         self.play_button = Button(
                                 self.screen, 
@@ -30,7 +31,7 @@ class HomeScene(Scene):
                                 image_hover=os.path.join("assets","images","icons","ic_play_circle_normal_o.png"),
                                 image_active=os.path.join("assets","images","icons","ic_play_circle_pressed_o.png"),
                                 )
-        
+        self.menu_group.add(self.play_button)
         self.dirty = True
         
     def on_button_press(self):
@@ -48,7 +49,8 @@ class HomeScene(Scene):
     def on_update(self):
         """
         """
-        self.play_button.on_update()
+        self.menu_group.update()
+        #self.play_button.on_update()
         if self.dirty:
             self.on_draw()
         self.dirty = False
@@ -70,7 +72,8 @@ class HomeScene(Scene):
             #print "drawing screen"
             #self.screen.fill((120,200,230))
             self.screen.fill((255, 255, 240))
-            self.play_button.dirty = True
-            self.play_button.on_draw(screen)
+            #self.play_button.dirty = True
+            #self.play_button.on_draw(screen)
+            self.menu_group.draw(self.screen)
             self.dirty = False
 

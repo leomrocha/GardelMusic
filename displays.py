@@ -282,17 +282,20 @@ class AbstractDisplay(object):
     def play(self):
         """
         """
+        print "calling play"
         self.playing = True
         self.last_update = time.time()
                 
     def pause(self):
         """
         """
+        print "calling pause"
         self.playing = False
         
     def stop(self):
         """
         """
+        print "calling stop"
         self.playing = False
         #TODO set time to 0
         #TODO reset notes positions

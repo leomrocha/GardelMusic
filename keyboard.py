@@ -173,8 +173,7 @@ class KeySprite(pygame.sprite.DirtySprite):
         """
         #activate on key events
         if self.rect.collidepoint(pygame.mouse.get_pos()):
-            #mouse_pressed = pygame.mouse.get_pressed()
-            #print "mouse_pressed = ", mouse_pressed
+            #print "mouse_pressed = ", pygame.mouse.get_pressed(), event
             #print "mouse over"
             #press key if any mouse button is pressed
             #if event.type == pygame.MOUSEBUTTONDOWN:
@@ -362,7 +361,7 @@ class Keyboard(object):
     
         #check if it touches the keyboard at least
         if self.rect.collidepoint(pygame.mouse.get_pos()):
-            #print "collides"
+            #print "collides event: ", event
             #TODO make this efficient
             collitions = []
             for k in self.keys:

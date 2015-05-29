@@ -9,6 +9,7 @@ The instrument, that shows what is happening and/or what should be happening wit
 import pygame
 from keyboard import *
 from displays import *
+import controls
 
 from button import Button
 
@@ -43,6 +44,15 @@ class PlayScene(object):
         #TEST        
         #self.keysprite = KeySprite(midi_id=56, pos=(1200,200) , size=(40,200), color='white', synesthesia=(255,100,100))
         #self.instrument_group.add(self.keysprite)
+        self.playback_controls = controls.PlaybackControlBar(screen=self.screen,
+                                                            pos=(self.w - 400 , 10),
+                                                            size=(200,50),
+                                                            on_backwards_callback=self.on_backwards,
+                                                            on_play_toggle_callback=self.on_play_toggle, 
+                                                            on_stop_callback=self.on_stop,
+                                                            on_forward_callback=self.on_forward
+                                                            )
+        '''
         self.play_button = Button(
                         self.screen, 
                         on_press_callback=self.on_play_button_press,
@@ -54,31 +64,55 @@ class PlayScene(object):
                         image_hover=os.path.join("assets","images","icons","ic_play_circle_normal_o.png"),
                         image_active=os.path.join("assets","images","icons","ic_play_circle_pressed_o.png"),
                         )
-        
+        '''
         self.dirty = True
         
-    def on_play_button_press(self):
-        #print "button press called"
-        self.dirty = True
+        ###test file names:
+        #fname = "assets/midi/yiruma-river_flows_in_you.mid"
+        fname="../../tests_midi/python-midi/mary.mid"
+        #load midi, this is a test, should be done somehow by the parent
+        self.load_midi(fname)
         
-    def on_play_button_hover(self):
-        #print "button hover called"
-        self.dirty = True
+    def on_backwards(self):
+        """
+        """
+        #print "going backwards"
+        self.player_display.step_back(1)
         
-    def on_play_button_release(self):
+    def on_play_toggle(self):
+        """
+        """
+        print "play toggle"
+        if self.player_display.playing:
+            print "pausing "
+            self.player_display.pause()
+        else:
+            print "playing"
+            self.player_display.play()
+        
+    def on_stop(self):
+        """
+        """
+        print "stopping"
+        self.player_display.stop()
+        
+    def on_forward(self):
+        """
+        """
+        #print "going forward"
+        self.player_display.step_forward(1)
+
+
+    def load_midi(self, fname="../../tests_midi/python-midi/mary.mid"):
         #print "button release called"
         #
         #TEST - this is AWFUL
-        fname = "../../tests_midi/python-midi/mary.mid"
+        
         #fname = "assets/midi/yiruma-river_flows_in_you.mid"
         self.level_info = MidiInfo(fname)
         
         keyboard_map = self.instrument.keyboard_map
         self.player_display.set_midi_info(self.level_info, keyboard_map)
-        self.dirty = True
-        self.player_display.play()
-        #END TEST
-        pass
         
 	
     def on_update(self):
@@ -89,15 +123,14 @@ class PlayScene(object):
 
         #TEST
         self.player_display.on_update()
-        self.play_button.on_update()
+        self.playback_controls.on_update()
         
     def on_event(self, event):
         """
         """
-        self.play_button.on_event(event)
-        #self.keysprite.on_event(event)
         self.instrument.on_event(event)
         self.player_display.on_event(event)
+        self.playback_controls.on_event(event)
         #self.dirty = True
         pass
 
@@ -107,15 +140,18 @@ class PlayScene(object):
         if not screen:
             screen = self.screen
         #if True:
+        
         if self.dirty:
             self._draw_background()
             #self._draw_display()
             #self._draw_instrument()
             #self._draw_scoreboard()
             #self._draw_menu()
-            self.play_button.dirty = True
-            self.play_button.on_draw(screen)
+            self.playback_controls.dirty = True
+            self.playback_controls.on_draw(screen)
             self.dirty = False
+        else:
+            self.playback_controls.on_draw(screen)
         self._draw_display()
         self._draw_instrument()
         self._draw_scoreboard()
