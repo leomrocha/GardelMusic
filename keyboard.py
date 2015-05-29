@@ -31,11 +31,12 @@ class KeyColorBar(pygame.sprite.Sprite):
         self.rect.y = self.boss.rect.y - height
         #print "keycolorbar initialized: ", self.boss.midi_id, self.rect
 
-    def update(self):
-        """
-        """
-        #nothing for the moment, later should update if the key is being played or not
-        pass
+    #def update(self):
+    #    """
+    #    """
+    #    #nothing for the moment, later should update if the key is being played or not
+    #    pass
+
 
 class KeySprite(pygame.sprite.DirtySprite):
     """
@@ -132,9 +133,8 @@ class KeySprite(pygame.sprite.DirtySprite):
         """
         Key activation
         """
-        print "note on id: %d with velocity: %d" %(self.midi_id, velocity)
+        #print "note on id: %d with velocity: %d" %(self.midi_id, velocity)
         #draw the colored overlay
-        #if finger >=1 && <=5 also overlay the finger id on the key
         self.state = ButtonStates.pressed
         self.image_index = 1
         #make only a few ranges in velocity transparency, this helps visualization
@@ -142,7 +142,7 @@ class KeySprite(pygame.sprite.DirtySprite):
         #use 127 as base number to have a minimum nice base solor, eliminate all non-int part
         #velocity = 63 + int(math.ceil((vel) / 8.)) * 12 # this makes 12 ranges of transparency
         vel = 63 + int(math.ceil((velocity) / 4.)) * 6 # this makes 6 ranges of transparency
-        print "velocity = ", vel
+        #print "velocity = ", vel
         self.pressed_image.set_alpha(vel)
         #print velocity
         #self.pressed_image.fill(self.synesthesia)

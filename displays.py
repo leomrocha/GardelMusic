@@ -489,8 +489,8 @@ class AbstractDisplay(object):
                 note_map = self.__find_note_in_mapping(midi_id, keyboard_map['keyboard_map'])
                 #print "note found: ", note_map
                 if note_map is not None:
-                    size = self._calc_note_size(sec_duration, note_map)
-                    pos = self._calc_note_pos(size, sec_start, sec_duration, sec_end, note_map)
+                    size = self._calc_note_size(midi_id, sec_duration, note_map)
+                    pos = self._calc_note_pos(midi_id, size, sec_start, sec_duration, sec_end, note_map)
                     note = NoteSprite(self.rect, size, pos, midi_id, tick_start, tick_end, self.midi_publish, note_map['synesthesia'])
                     synesthesia = note_map['synesthesia']
                     #
@@ -539,14 +539,14 @@ class PlayerVerticalDisplay(AbstractDisplay):
         vmove = self.size[1] * delta_time / self.screen_time
         return (0, vmove)
 
-    def _calc_note_size(self, sec_duration, note_map):
+    def _calc_note_size(self, midi_id, sec_duration, note_map):
         """
         """
         height = self.size[1] * sec_duration / self.screen_time
         size = [note_map['size'][0], height]
         return size
 
-    def _calc_note_pos(self, size, sec_start, sec_duration, sec_end, note_map):
+    def _calc_note_pos(self, midi_id, size, sec_start, sec_duration, sec_end, note_map):
         """
         """
         height = size[1]
@@ -574,11 +574,20 @@ class PlayerHorizontalDisplay(AbstractDisplay):
     input format: MIDI
     TODO add annotations (for hand and 
     """
-    def __init__(self, screen, midi_pubsub, size, pos=(0,0), screen_time=5):
+    def __init__(self, screen, midi_pubsub, size, pos=(0,0), screen_time=15):
         """
         """
-        bkg = pygame.image.load("assets/images/displays/vertical_display_lines.png").convert_alpha()
+        bkg = pygame.image.load("assets/images/displays/horizontal_display_lines.png").convert_alpha()
+        self.REF_HEIGHT = 400
+        self.REF_WIDTH = 800
+        self.REF_NUMBER_NOTES = 88
+        
+        #TODO take out all this hardcoded values fromo here, 
+        #this are the dimensions of the vertical display and the calculations from keyboard mappings come from here        
+        self.REF_HEIGHT_VERTICAL = 400
+        self.REF_WIDTH_VERTICAL = 1040
 
+        
         super(PlayerHorizontalDisplay, self).__init__(screen, midi_pubsub, bkg, size, pos, screen_time)
         
     def _get_note_displacement(self, delta_time):
@@ -587,14 +596,14 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         hmove = - self.size[0] * delta_time / self.screen_time
         return (hmove, 0)
 
-    def _calc_note_size(self, sec_duration, note_map):
+    def _calc_note_size(self, midi_id, sec_duration, note_map):
         """
         """
         width = self.size[0] * sec_duration / self.screen_time
-        size = [width, self.size[1]/len(note_map['keyboard_map'])]
+        size = [width, self.size[1]/self.REF_NUMBER_NOTES] #TODO recalculate this
         return size
 
-    def _calc_note_pos(self, size, sec_start, sec_duration, sec_end, note_map):
+    def _calc_note_pos(self, midi_id, size, sec_start, sec_duration, sec_end, note_map):
         """
         """
         
@@ -602,11 +611,12 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         #negative y position (above the display) 
         #xpos = - (self.size[0] * sec_start / self.screen_time) - width + self.pos[0]
         xpos = (self.size[0] * sec_start / self.screen_time) - width + self.size[0]
-        base_note = note_map['keyboard_map'][0]['midi_id']
+        #midi_id = note_map['midi_id']
         #vpos = len(note_map['keyboard_map']) * (midi_id - base_note)
-        
+        vpos = self.REF_HEIGHT * note_map['pos'][0] / self.REF_WIDTH_VERTICAL
+        ypos = self.size[1] - vpos
         #ypos = - (self.pos[1] * sec_start / self.screen_time) -height + self.pos[1]
-        pos = (xpos, vpos)
+        pos = (xpos, ypos)
         return pos
 
 ################################################################################
