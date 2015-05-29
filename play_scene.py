@@ -82,18 +82,14 @@ class PlayScene(object):
     def on_play_toggle(self):
         """
         """
-        print "play toggle"
         if self.player_display.playing:
-            print "pausing "
             self.player_display.pause()
         else:
-            print "playing"
             self.player_display.play()
         
     def on_stop(self):
         """
         """
-        print "stopping"
         self.player_display.stop()
         
     def on_forward(self):
@@ -101,7 +97,6 @@ class PlayScene(object):
         """
         #print "going forward"
         self.player_display.step_forward(1)
-
 
     def load_midi(self, fname="../../tests_midi/python-midi/mary.mid"):
         #print "button release called"

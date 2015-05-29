@@ -184,6 +184,9 @@ class NoteSprite(pygame.sprite.Sprite):
         #Subpixel calculations IMPORTANT
         self.image_on = self.subpixel_image_on.at(self.x, self.y)
         self.image_off = self.subpixel_image_off.at(self.x, self.y)
+        #reset state 
+        self.state = ButtonStates.passive
+        self.on_note_off()
         
     def on_draw(self, scene):
         """
@@ -236,7 +239,7 @@ class NoteSprite(pygame.sprite.Sprite):
         self.state = ButtonStates.pressed
         self.image_index = 1
         #TODO WARNING, see how this should be updated ... not sure if here
-        self.on_update()
+        #self.on_update()
         
     def on_note_off(self):
         """
@@ -245,7 +248,7 @@ class NoteSprite(pygame.sprite.Sprite):
         self.state = ButtonStates.passive
         self.image_index = 0
         #TODO WARNING, see how this should be updated ... not sure if here
-        self.on_update()
+        #self.on_update()
 
 ################################################################################
 
@@ -277,7 +280,8 @@ class AbstractDisplay(object):
         self.allgroups = pygame.sprite.Group()
         
         #KeySprite.groups = self.allkeys, self.allgroups
-        NoteSprite.groups = self.allgroups, self.notes_group
+        #NoteSprite.groups = self.allgroups, self.notes_group
+        NoteSprite.groups = self.notes_group
         
         self.notes = []
 
@@ -311,8 +315,11 @@ class AbstractDisplay(object):
         """
         #print "calling stop"
         self.playing = False
-        # reset notes positions
-        for n in self.notes_group:
+        #recreate all notes buffer
+        self.notes_group.empty()
+        #add all the notes resetting their possitions
+        for n in self.notes:
+            self.notes_group.add(n)
             n.reset_pos()
         # set time to 0
         self.current_time = 0
@@ -321,16 +328,31 @@ class AbstractDisplay(object):
         """
         secs = seconds to go forward
         """
-        print "going forwards  %d secs" %secs
-        
+        #print "going forwards  %d secs" %secs
         self._update_notes(secs)
     
     def step_back(self, secs):
         """
         secs = seconds to go back
         """
-        print "going backwards  %d secs" %secs
-        self._update_notes(-secs)
+        #TODO check if this algorithm can be made faster, for the moment recreates everything
+        #print "going backwards  %d secs" %secs
+        #reset display group, because there are keys that have been already erased from screen
+        #now update positions
+        #take current time
+        curr_time = self.current_time
+        #print 'curr_time = ',curr_time
+        next_time = max(0,curr_time-secs)
+        #clear all the notes from the group
+        self.notes_group.empty()
+        #add all the notes
+        for n in self.notes:
+            self.notes_group.add(n)
+            n.reset_pos()
+        #reset all positions and things
+        self.current_time = 0
+        #set new time to next_time
+        self._update_notes(next_time)
         
     def on_end_playing(self):
         """
