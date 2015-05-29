@@ -43,6 +43,12 @@ class PlaybackControlBar(object):
         self.screen = screen
         self.pos = pos
         self.size = size
+        #callbacks
+        #self.on_backwards_callback=on_backwards_callback
+        #self.on_play_toggle_callback=on_play_toggle_callback
+        self.on_stop_callback=on_stop_callback
+        #self.on_forward_callback=on_forward_callback
+        
         #calculate button size:
         bh = size[1]
         bw = min( size[0] / 4, bh)
@@ -60,6 +66,7 @@ class PlaybackControlBar(object):
         self.background.rect.y = pos[1]
         self.rect = self.background.rect
         self.bkg_group.add(self.background)
+        ##
         #here the buttons
         self.back = Button(
                             self.screen, 
@@ -80,7 +87,7 @@ class PlaybackControlBar(object):
                             )
         self.stop = Button(
                             self.screen, 
-                            on_release_callback=on_stop_callback,
+                            on_release_callback=self.on_stop,
                             size=bsize, 
                             pos=(pos[0] + 2 * bw, pos[1]),
                             image_passive=os.path.join("assets","images","icons","ic_stop_circle_normal_w.png"),
@@ -105,6 +112,14 @@ class PlaybackControlBar(object):
         
         self.playing = False
         self.dirty = True
+        
+    def on_stop(self):
+        """
+        """
+        #reset play toggle button
+        self.play_pause.deactivate()
+        #call stop callback
+        self.on_stop_callback()
 
     def on_draw(self, screen=None):
         """

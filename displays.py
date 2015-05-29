@@ -110,7 +110,9 @@ class NoteSprite(pygame.sprite.Sprite):
         
         #note state
         self.state = ButtonStates.passive
-
+        #update
+        self.update=self.on_update
+        
     def _evaluate_visibility(self):
         """
         Check if the note has to be removed from parent 
@@ -171,6 +173,18 @@ class NoteSprite(pygame.sprite.Sprite):
         self._evaluate_visibility()
         self._evaluate_midi_event()
         
+    def reset_pos(self):
+        """
+        resets the position to the original one
+        """
+        self.x = self.pos[0]
+        self.y = self.pos[1]
+        self.rect.x = self.x
+        self.rect.y = self.y
+        #Subpixel calculations IMPORTANT
+        self.image_on = self.subpixel_image_on.at(self.x, self.y)
+        self.image_off = self.subpixel_image_off.at(self.x, self.y)
+        
     def on_draw(self, scene):
         """
         """
@@ -195,7 +209,7 @@ class NoteSprite(pygame.sprite.Sprite):
         elif self.state == ButtonStates.pressed:
             self.on_note_release()
         
-        self.on_update()
+        #self.on_update()
         
     def on_note_press(self):
         """
@@ -282,38 +296,41 @@ class AbstractDisplay(object):
     def play(self):
         """
         """
-        print "calling play"
+        #print "calling play"
         self.playing = True
         self.last_update = time.time()
                 
     def pause(self):
         """
         """
-        print "calling pause"
+        #print "calling pause"
         self.playing = False
         
     def stop(self):
         """
         """
-        print "calling stop"
+        #print "calling stop"
         self.playing = False
-        #TODO set time to 0
-        #TODO reset notes positions
-        pass
+        # reset notes positions
+        for n in self.notes_group:
+            n.reset_pos()
+        # set time to 0
+        self.current_time = 0
 
     def step_forward(self, secs):
         """
         secs = seconds to go forward
         """
         print "going forwards  %d secs" %secs
-        pass
+        
+        self._update_notes(secs)
     
     def step_back(self, secs):
         """
         secs = seconds to go back
         """
         print "going backwards  %d secs" %secs
-        pass
+        self._update_notes(-secs)
         
     def on_end_playing(self):
         """
@@ -321,7 +338,6 @@ class AbstractDisplay(object):
         print "end playing"
         self.playing = False
         #TODO maybe send a signal to parent to tell the rest of the app that this is finihsed???
-
         
     def on_update(self):
         """
@@ -362,24 +378,28 @@ class AbstractDisplay(object):
         """
         raise NotImplemented("_get_note_displacement not implemented, MUST subclass it")
         
+    def _update_notes(self, extra_time=0):
+        #calculate how much time was elapsed
+        now = time.time()
+        delta = now - self.last_update + extra_time
+        self.last_update = now
+        #calculate vertical movement
+        displacement = self._get_note_displacement(delta)
+        #check if end play
+        notes = self.notes_group.sprites()
+        if len(notes)<=0:
+            self.on_end_playing()
+            
+        for n in notes:
+            #print n, n.midi_id
+            n.move(displacement)
+        self.current_time += delta
+        
     def on_update(self):
         """
         """
         if self.playing:
-            #calculate how much time was elapsed
-            now = time.time()
-            delta = now - self.last_update
-            self.last_update = now
-            #calculate vertical movement
-            displacement = self._get_note_displacement(delta)
-            #check if end play
-            notes = self.notes_group.sprites()
-            if len(notes)<=0:
-                self.on_end_playing()
-                
-            for n in notes:
-                #print n, n.midi_id
-                n.move(displacement)
+            self._update_notes()
 
     def __find_note_in_mapping(self, midi_id, keyboard_map):
         """
