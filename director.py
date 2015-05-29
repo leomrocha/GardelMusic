@@ -49,6 +49,7 @@ class Director:
         #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height), pygame.FULLSCREEN, 32)
 
         #self.screen = pygame.display.set_mode((1600, 900), RESIZABLE)
+        #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height), pygame.RESIZABLE, 32)
         #self.screen = pygame.display.set_mode((1060, 500))
 
         pygame.display.set_caption("Piano Challenge")

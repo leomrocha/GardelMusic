@@ -14,6 +14,28 @@ from button import ButtonStates
 black_key_image = None
 white_key_image = None
 
+    
+class KeyColorBar(pygame.sprite.Sprite):
+    """shows a small upper bar with the representative synesthesia color"""
+    def __init__(self, boss, synesthesia=(250,250,240), height=7):
+        #pygame.sprite.Sprite.__init__(self,self.groups())  #is not working. I don't get it ...
+        #pygame.sprite.Sprite.__init__(self)
+        super(KeyColorBar, self).__init__()
+        self.boss = boss
+        
+        self.image = pygame.Surface((self.boss.rect.width,height))
+        self.image.set_colorkey((26,26,26)) # black transparent
+        pygame.draw.rect(self.image, synesthesia, (0,0,self.boss.rect.width,height))
+        self.rect = self.image.get_rect()
+        self.rect.x = self.boss.rect.x
+        self.rect.y = self.boss.rect.y - height
+        #print "keycolorbar initialized: ", self.boss.midi_id, self.rect
+
+    def update(self):
+        """
+        """
+        #nothing for the moment, later should update if the key is being played or not
+        pass
 
 class KeySprite(pygame.sprite.DirtySprite):
     """
@@ -175,62 +197,6 @@ class KeySprite(pygame.sprite.DirtySprite):
         """
         pass
         
-
-class KeyGroup(pygame.sprite.Group):
-    """
-    Contains the key and other elements for the interactivity
-    """
-    #TODO
-    pass
-
-
-class KeyboardSprite(pygame.sprite.Sprite):
-    """
-    Piano Keyboard Sprite basic romo an image, no behaviour is handled
-    """
-    
-    def __init__(self, pos=(0,0)):
-        """
-        """
-        #Super constructor
-        #super().__init__()
-        super(KeyboardSprite, self).__init__()
-        #pygame.sprite.Sprite.__init__(self)
-        #
-
-        #Keyboard Image        
-        self.image = pygame.image.load("assets/images/keyboard/plain_keyboard.png").convert_alpha()
-        self.rect = self.image.get_rect() # use image extent values
-        self.rect.topleft = pos
-        
-    def update(self):
-        """
-        """
-        #print "updating keyboard sprite"
-        super(KeyboardSprite, self).update()
-        pass
-        
-    def collides_key(self, pos):
-        """
-        Calculates the key in the keyboard that is touched by the event position
-        returns:
-        midi_note (pygame event notation??? TODO decide)
-        bounding box (x,y,w,h) of the element
-        
-        """
-        #TODO
-        #1 see if collides with the keyboard, else return false
-        #2 if so, see what note (white) it collides, calculate also the rect containing the white note (this should be pre-calculated somewhere to make it faster)
-        
-        #3 if height < Ybk0 return true and note that it collides (midi notation) #Ybk0 == lower Y position of black key counted from the bottom
-        
-        #4 if heignt >Ybk0 see if it collides with which note (the flat or the sharp ...
-        
-        #5 return the nothe that it collides with, position, bounding box and midi notation
-        
-        pass
-        
-
 class Keyboard(object):
     """
     Complete keyboard implementation
@@ -239,6 +205,7 @@ class Keyboard(object):
     #   - sustain pedals
     #   - top rect with synesthesia for each key
     #   - finger number and hand indication, localized (i18n) example: right1 = r1 , left2 = l2; gauche1 = g1, droite3 = d3
+    #   - central Do mark (a red dot below the key will be nice for example)
     def __init__(self, screen, midi_pubsub, pos=(0,0), width=1060):
         """
         """
@@ -260,7 +227,11 @@ class Keyboard(object):
         #define sprite groups
         
         self.white_keys_group = pygame.sprite.Group()
+        self.white_keys_colorbar_group = pygame.sprite.Group()
+        
         self.black_keys_group = pygame.sprite.Group()
+        self.black_keys_colorbar_group = pygame.sprite.Group()
+        
         # LayeredUpdates instead of group to draw in correct order
         self.allgroups = pygame.sprite.Group()
         
@@ -309,7 +280,7 @@ class Keyboard(object):
         key_map = self.keyboard_map['keyboard_map']
         kb_width, kb_height = self.keyboard_map['size']
         padding = self.keyboard_map['padding']
-        
+        cb_height = int(0.04 * kb_height)
         self.keys = []
         
         for k in key_map:
@@ -321,15 +292,20 @@ class Keyboard(object):
             key_pos = (pos[0] + key_pos[0], pos[1] + padding['top'])
             
             key_color = k['color']
+
             
             ks = KeySprite(midi_id=k['midi_id'], pos=key_pos , size=key_size , 
                            color=key_color , midi_publish = self.midi_pubsub.publish,
                            synesthesia=k['synesthesia'] )
             self.keys.append(ks)
+            
+            cb = KeyColorBar(ks, k['synesthesia'], cb_height)
             if k['color'] == 'black':
                 self.black_keys_group.add(ks)
+                self.black_keys_colorbar_group.add(cb)
             else:
                 self.white_keys_group.add(ks)
+                self.white_keys_colorbar_group.add(cb)
                 #background
 
         #General background of all the keyboard
@@ -344,7 +320,6 @@ class Keyboard(object):
         self.allgroups.add(self.background)
         #background of the keys (to be able to handle transparency correctly
         self.kb_background = pygame.sprite.Sprite()
-        
         self.kb_background.image = pygame.Surface((kb_width - padding['left'] - padding['right'],kb_height - padding['top'] - padding['bottom']))
         #self.kb_background.fill((26,26,26))     # fill black
         self.kb_background.image.fill((230,230,240))     # fill white
@@ -369,10 +344,16 @@ class Keyboard(object):
         #self.white_keys_group.clear(screen, self.kb_background)
         self.white_keys_group.update()
         self.white_keys_group.draw(screen)
+
+        self.white_keys_colorbar_group.update()
+        self.white_keys_colorbar_group.draw(screen)
+        
         
         #self.black_keys_group.clear(screen, self.kb_background)
         self.black_keys_group.update()
         self.black_keys_group.draw(screen)
+        self.black_keys_colorbar_group.update()
+        self.black_keys_colorbar_group.draw(screen)
         #self.allkeys.draw(screen)
         #self.allgroups.draw(screen)
         pass
