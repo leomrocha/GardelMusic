@@ -41,8 +41,11 @@ class PlayScene(object):
         kb_height = keyboard_mappings.get_height(self.w)
         self.instrument = Keyboard(self.screen, midi_pubsub=self.midi_pubsub, pos=(0, self.h-kb_height), width=self.w)
         
-        pd_height = self.h - kb_height - 75
-        self.player_display = PlayerVerticalDisplay(self.screen, self.midi_pubsub, size=(int(1040 * self.w /1060. ), pd_height), pos=(0, 75))
+        #pd_height = self.h - kb_height - 75
+        pd_height = self.h - kb_height - 10
+        #self.player_display = PlayerVerticalDisplay(self.screen, self.midi_pubsub, size=(int(1040 * self.w /1060.), pd_height), pos=(10, 75))
+        self.player_display = PlayerVerticalDisplay(self.screen, self.midi_pubsub, size=(self.w, pd_height), pos=(0, 10))
+        #self.player_display = PlayerHorizontalDisplay(self.screen, self.midi_pubsub, size=(self.w, pd_height), pos=(0, 75))
         #self.instrument_group = pygame.sprite.Group()
         #self.instrument_group.add(self.instrument)
         #TEST        
@@ -149,8 +152,7 @@ class PlayScene(object):
             self.playback_controls.dirty = True
             self.playback_controls.on_draw(screen)
             self.dirty = False
-        else:
-            self.playback_controls.on_draw(screen)
+
         self._draw_display()
         self._draw_instrument()
         self._draw_scoreboard()
@@ -196,5 +198,6 @@ class PlayScene(object):
         """
         Menu (go back, pause, stop, volume and so on)
         """
+        self.playback_controls.on_draw(self.screen)
         pass
 

@@ -508,12 +508,11 @@ class PlayerVerticalDisplay(AbstractDisplay):
     input format: MIDI
     TODO add annotations (for hand and 
     """
-    def __init__(self, screen, midi_pubsub, size, pos=(0,0)):
+    def __init__(self, screen, midi_pubsub, size, pos=(0,0), screen_time=5):
         """
         """
         bkg = pygame.image.load("assets/images/displays/vertical_display_lines.png").convert_alpha()
 
-        screen_time = 5
         super(PlayerVerticalDisplay, self).__init__(screen, midi_pubsub, bkg, size, pos, screen_time)
                 
     #def __verify_overlap(self):
@@ -558,36 +557,61 @@ class PlayerVerticalDisplay(AbstractDisplay):
         return pos
 
 ################################################################################
-class PlayerHorizontalDisplay(object):
+
+class VerticalDial(pygame.sprite.Sprite):
+    """
+    """
+    def __init__(self, pos, size, ):
+        """
+        """
+        #TODO
+        pass
+
+
+class PlayerHorizontalDisplay(AbstractDisplay):
     """
     display that shows a given file
     input format: MIDI
     TODO add annotations (for hand and 
     """
-    def __init__(self, screen, pos, size):
+    def __init__(self, screen, midi_pubsub, size, pos=(0,0), screen_time=5):
         """
         """
-        pass
-        
-    def on_update(self):
-        """
-        """
-        pass
-    
-    def on_draw(self, scene):
-        """
-        """
-        pass
-        
-    def on_event(self, event):
-        """
-        """
-        pass
+        bkg = pygame.image.load("assets/images/displays/vertical_display_lines.png").convert_alpha()
 
+        super(PlayerHorizontalDisplay, self).__init__(screen, midi_pubsub, bkg, size, pos, screen_time)
+        
+    def _get_note_displacement(self, delta_time):
+        """
+        """
+        hmove = - self.size[0] * delta_time / self.screen_time
+        return (hmove, 0)
+
+    def _calc_note_size(self, sec_duration, note_map):
+        """
+        """
+        width = self.size[0] * sec_duration / self.screen_time
+        size = [width, self.size[1]/len(note_map['keyboard_map'])]
+        return size
+
+    def _calc_note_pos(self, size, sec_start, sec_duration, sec_end, note_map):
+        """
+        """
+        
+        width = size[0]
+        #negative y position (above the display) 
+        #xpos = - (self.size[0] * sec_start / self.screen_time) - width + self.pos[0]
+        xpos = (self.size[0] * sec_start / self.screen_time) - width + self.size[0]
+        base_note = note_map['keyboard_map'][0]['midi_id']
+        #vpos = len(note_map['keyboard_map']) * (midi_id - base_note)
+        
+        #ypos = - (self.pos[1] * sec_start / self.screen_time) -height + self.pos[1]
+        pos = (xpos, vpos)
+        return pos
 
 ################################################################################
 
-class PlayerSheetDisplay(object):
+class PlayerSheetDisplay(AbstractDisplay):
     """
     display that shows a given file
     input format: MIDI
