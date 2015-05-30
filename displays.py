@@ -589,9 +589,14 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         self.LEFT_OVERLAY_PROPORTION =  1./6
         self.RIGHT_OVERLAY_PROPORTION =  1./4 #2. / 6
         
-        #left overlay
+        self._set_overlay()
 
-        left_overlay_size = (size[0] * self.LEFT_OVERLAY_PROPORTION ,size[1])
+    def _set_overlay(self):
+        """
+        sets overlay shadows for display references
+        """
+        #left overlay
+        left_overlay_size = (self.size[0] * self.LEFT_OVERLAY_PROPORTION ,self.size[1])
         self.left_overlay = pygame.sprite.Sprite()
         self.left_overlay.image = pygame.Surface(left_overlay_size, pygame.HWSURFACE, 32)
         self.left_overlay.image.set_alpha(128)
@@ -599,12 +604,12 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         self.left_overlay.image.fill((51,53,64))     # fill black
         #self.left_overlay.image.fill((250,250,250))     # fill white ->should make a white background behind the keys for the transparency to work well, but black behind it to fill the borders in black
         self.left_overlay.rect = self.left_overlay.image.get_rect()
-        self.left_overlay.rect.x = pos[0]
-        self.left_overlay.rect.y = pos[1]
+        self.left_overlay.rect.x = self.pos[0]
+        self.left_overlay.rect.y = self.pos[1]
 
         self.overlay_group.add(self.left_overlay)
         #right overlay
-        right_overlay_size = (size[0] * self.RIGHT_OVERLAY_PROPORTION ,size[1])
+        right_overlay_size = (self.size[0] * self.RIGHT_OVERLAY_PROPORTION ,self.size[1])
         self.right_overlay = pygame.sprite.Sprite()
         self.right_overlay.image = pygame.Surface(right_overlay_size, pygame.HWSURFACE, 32)
         self.right_overlay.image.set_alpha(128)
@@ -612,8 +617,8 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         self.right_overlay.image.fill((51,53,64))     # fill black
         #self.right_overlay.image.fill((250,250,250))     # fill white ->should make a white background behind the keys for the transparency to work well, but black behind it to fill the borders in black
         self.right_overlay.rect = self.right_overlay.image.get_rect()
-        self.right_overlay.rect.x = pos[0] + size[0] - right_overlay_size[0]
-        self.right_overlay.rect.y = pos[1]
+        self.right_overlay.rect.x = self.pos[0] + self.size[0] - right_overlay_size[0]
+        self.right_overlay.rect.y = self.pos[1]
 
         self.overlay_group.add(self.right_overlay)
 
