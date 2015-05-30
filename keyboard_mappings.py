@@ -245,7 +245,6 @@ def generate_keyboard_map(key_range=(21,95), synesthesia_colors=synesthesia.curr
                 'size': dim
             }
         
-        
         keyboard_map.append(key)
     
     #now create all the other reference dimension containers to return:

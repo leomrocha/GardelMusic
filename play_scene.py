@@ -77,7 +77,7 @@ class PlayScene(object):
         
         ###test file names:
         #fname = "assets/midi/yiruma-river_flows_in_you.mid"
-        fname="../../tests_midi/python-midi/mary.mid"
+        fname="assets/midi/mary.mid"
         #load midi, this is a test, should be done somehow by the parent
         self.load_midi(fname)
         
@@ -106,7 +106,7 @@ class PlayScene(object):
         #print "going forward"
         self.player_display.step_forward(1)
 
-    def load_midi(self, fname="../../tests_midi/python-midi/mary.mid"):
+    def load_midi(self, fname="assets/midi/mary.mid"):
         #print "button release called"
         #
         #TEST - this is AWFUL

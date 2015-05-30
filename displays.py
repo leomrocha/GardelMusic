@@ -40,21 +40,10 @@ REF_NUMBER_KEYS = 88
 
 ################################################################################
 
-
-class Displacement(object):
-    """
-    Enum types of displacement
-    the name indicates the axis and the direction
-    """
-    VERTICAL_DOWN = 'vertical_down'
-    VERTICAL_UP = 'vertical_up'
-    HORIZONTAL_LEFT = 'horizontal_down'
-    HORIZONTAL_RIGHT = 'horizontal_right'
-
 class NoteSprite(pygame.sprite.Sprite):
     """
     """
-    def __init__(self, parent_rect, size, pos, midi_id, tick_start, tick_end, midi_publish, synesthesia, displacement=Displacement.VERTICAL_DOWN):
+    def __init__(self, parent_rect, size, pos, midi_id, tick_start, tick_end, midi_publish, synesthesia):
         """
         """
         super(NoteSprite, self).__init__()
@@ -65,8 +54,6 @@ class NoteSprite(pygame.sprite.Sprite):
         #   if the note has to be removed from parent (when gets out of scope, to avoid using rendering resources)
         #   when the events note_on and note_off have to be launched (this is not the best timing method, but it might work for a demo)
         self.parent_rect = parent_rect
-        #axis and direction of the displacement
-        self.displacement = displacement
         #
         #note information ... maybe will be updated to include name and other informations as flat or sharp
         self.midi_id = midi_id
@@ -212,7 +199,7 @@ class NoteSprite(pygame.sprite.Sprite):
 class AbstractDisplay(object):
     """
     """
-    def __init__(self, screen, midi_pubsub, background_image, size, pos=(0,0), screen_time=10):
+    def __init__(self, screen, midi_pubsub, size, pos=(0,0), screen_time=10):
         """
         screen, 
         midi_pubsub, 
@@ -228,8 +215,9 @@ class AbstractDisplay(object):
         
         self.midi_pubsub = midi_pubsub
 
-        self.background = pygame.transform.scale(background_image, size)
-        self.rect = self.background.get_rect() # use image extent values
+        #self.background = pygame.transform.scale(background_image, size)
+        #self.rect = self.background.get_rect() # use image extent values
+        self.rect = pygame.rect.Rect((0,0), size)
         self.rect.topleft = pos
         
         self.notes_group = pygame.sprite.Group()
@@ -241,7 +229,6 @@ class AbstractDisplay(object):
         NoteSprite.groups = self.notes_group
         
         self.notes = []
-        self.displacement = Displacement.VERTICAL_DOWN
 
         #Default
         self.screen_time = screen_time
@@ -335,12 +322,12 @@ class AbstractDisplay(object):
         """
         """
         #print "drawing "
-        screen.blit(self.background, self.pos)
-        self.allgroups.clear(screen, self.background)
+        #screen.blit(self.background, self.pos)
+        #self.allgroups.clear(screen, self.background)
         self.allgroups.update()
         self.allgroups.draw(screen)
 
-        self.notes_group.clear(screen, self.background)
+        #self.notes_group.clear(screen, self.background)
         self.notes_group.update()
         self.notes_group.draw(screen)
         
@@ -455,7 +442,7 @@ class AbstractDisplay(object):
                 if note_map is not None:
                     size = self._calc_note_size(midi_id, sec_duration, note_map)
                     pos = self._calc_note_pos(midi_id, size, sec_start, sec_duration, sec_end, note_map)
-                    note = NoteSprite(self.rect, size, pos, midi_id, tick_start, tick_end, self.midi_publish, note_map['synesthesia'], self.displacement)
+                    note = NoteSprite(self.rect, size, pos, midi_id, tick_start, tick_end, self.midi_publish, note_map['synesthesia'])
                     synesthesia = note_map['synesthesia']
                     #
                     self.notes.append(note)
@@ -476,8 +463,9 @@ class PlayerVerticalDisplay(AbstractDisplay):
         """
         """
         bkg = pygame.image.load("assets/images/displays/vertical_display_lines.png").convert_alpha()
-
-        super(PlayerVerticalDisplay, self).__init__(screen, midi_pubsub, bkg, size, pos, screen_time)
+        self.background = pygame.transform.scale(bkg, size)
+        
+        super(PlayerVerticalDisplay, self).__init__(screen, midi_pubsub, size, pos, screen_time)
                 
     #def __verify_overlap(self):
     #    """
@@ -545,7 +533,18 @@ class PlayerVerticalDisplay(AbstractDisplay):
         elif note_sprite.state == ButtonStates.passive and (y+h)>(py+ph):
             note_sprite.on_note_press()
 
+    def on_draw(self, screen):
+        """
+        """
+        #print "drawing "
+        screen.blit(self.background, self.pos)
+        #self.allgroups.clear(screen, self.background)
+        #self.allgroups.update()
+        #self.allgroups.draw(screen)
 
+        self.notes_group.clear(screen, self.background)
+        self.notes_group.update()
+        self.notes_group.draw(screen)
 ################################################################################
 
 class VerticalDial(pygame.sprite.Sprite):
@@ -571,6 +570,8 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         """
         """
         bkg = pygame.image.load("assets/images/displays/horizontal_display_lines.png").convert_alpha()
+        self.background = pygame.transform.scale(bkg, size)
+        
         self.REF_HEIGHT = 400
         self.REF_WIDTH = 800
         self.REF_NUMBER_NOTES = 88
@@ -580,9 +581,7 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         self.REF_HEIGHT_VERTICAL = 400
         self.REF_WIDTH_VERTICAL = 1040
 
-        super(PlayerHorizontalDisplay, self).__init__(screen, midi_pubsub, bkg, size, pos, screen_time)
-        
-        self.displacement = Displacement.HORIZONTAL_LEFT
+        super(PlayerHorizontalDisplay, self).__init__(screen, midi_pubsub, size, pos, screen_time)
         
         self.overlay_group = pygame.sprite.Group()
 
@@ -639,16 +638,10 @@ class PlayerHorizontalDisplay(AbstractDisplay):
     def _calc_note_pos(self, midi_id, size, sec_start, sec_duration, sec_end, note_map):
         """
         """
-        
         width = size[0]
-        #negative y position (above the display) 
-        #xpos = - (self.size[0] * sec_start / self.screen_time) - width + self.pos[0]
-        xpos = (self.size[0] * sec_start / self.screen_time) - width + self.size[0]
-        #midi_id = note_map['midi_id']
-        #vpos = len(note_map['keyboard_map']) * (midi_id - base_note)
+        xpos = (self.size[0] * sec_start / self.screen_time) + (self.size[0] * (1-self.RIGHT_OVERLAY_PROPORTION))
         vpos = self.REF_HEIGHT * note_map['pos'][0] / self.REF_WIDTH_VERTICAL
         ypos = self.size[1] - vpos
-        #ypos = - (self.pos[1] * sec_start / self.screen_time) -height + self.pos[1]
         pos = (xpos, ypos)
         return pos
 
@@ -692,9 +685,9 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         """
         #print "drawing "
         screen.blit(self.background, self.pos)
-        self.allgroups.clear(screen, self.background)
-        self.allgroups.update()
-        self.allgroups.draw(screen)
+        #self.allgroups.clear(screen, self.background)
+        #self.allgroups.update()
+        #self.allgroups.draw(screen)
 
         self.notes_group.clear(screen, self.background)
         self.notes_group.update()
@@ -703,6 +696,29 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         #self.overlay_group.clear(screen, self.background)
         self.overlay_group.update()
         self.overlay_group.draw(screen)
+
+
+################################################################################
+
+class PlayerDialDisplay(AbstractDisplay):
+    """
+    display that shows a given file
+    input format: MIDI
+    TODO many things ...
+        - hand annotations
+        - finger annotations
+        - other nice thingies
+    """
+    def __init__(self, screen, midi_pubsub, size, pos=(0,0), screen_time=15):
+        """
+        """
+        
+        #load background
+        sheet_background_colors.png
+        bkg = pygame.image.load("assets/images/sheet/sheet_lines.png").convert_alpha()
+        
+        super(PlayerDialDisplay, self).__init__(screen, midi_pubsub, bkg, size, pos, screen_time, bkg)
+        
 
 ################################################################################
 
