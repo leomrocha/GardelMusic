@@ -113,47 +113,6 @@ class NoteSprite(pygame.sprite.Sprite):
         #update
         self.update=self.on_update
         
-    def _evaluate_visibility(self):
-        """
-        Check if the note has to be removed from parent 
-        (when gets out of scope, to avoid using rendering resources)
-        """
-        pass
-        
-    def _evaluate_midi_event(self):
-        """
-        when the events note_on and note_off have to be launched 
-        (this is not the best timing method, but it might work for a demo)
-        when touches bottom
-        """
-        #TODO move this from hte notes to somewhere else, because this breaks portability and other things
-        # .... a refactoring WILL BE NECESSARY!!
-        #maybe see to pass this method as parameter in the note creation ?
-        px,py,pw,ph = self.parent_rect
-        x,y,w,h = self.rect
-        
-        if self.displacement == Displacement.VERTICAL_DOWN:
-            #check it went out of the screen (to the bottom)
-            if y >(py+ph):
-                # turn of midi if active
-                if self.state == ButtonStates.pressed:
-                    self.on_note_release()
-                #erase from all the display groups
-                #self.remove(*self.groups)
-                self.kill()
-            #check turn midi_on
-            elif self.state == ButtonStates.passive and (y+h)>(py+ph):
-                self.on_note_press()
-        elif self.displacement == Displacement.VERTICAL_UP:
-            #TODO
-            pass
-        elif self.displacement == Displacement.HORIZONTAL_LEFT:
-            #TODO
-            pass            
-        elif self.displacement == Displacement.HORIZONTAL_RIGHT:
-            #TODO
-            pass
-            
     def move(self, vector):
         """
         vector = (x,y) movement
@@ -170,9 +129,6 @@ class NoteSprite(pygame.sprite.Sprite):
         #for all animations
         self.image_on = self.subpixel_image_on.at(self.x, self.y)
         self.image_off = self.subpixel_image_off.at(self.x, self.y)
-        
-        self._evaluate_visibility()
-        self._evaluate_midi_event()
         
     def reset_pos(self):
         """
@@ -364,6 +320,17 @@ class AbstractDisplay(object):
         self.stop()
         #TODO send a signal to parent to tell the rest of the app that reproduction ended
         
+        
+    def _evaluate_midi_event(self, note_sprite):
+        """
+        when the events note_on and note_off have to be launched 
+        (this is not the best timing method, but it might work for a demo)
+        
+        note_sprite: the note sprite to be evaluated
+        """
+        raise NotImplemented("_evalaute_midi_event not implemented, MUST subclass it")  
+
+
     def on_draw(self, screen):
         """
         """
@@ -411,6 +378,8 @@ class AbstractDisplay(object):
         for n in notes:
             #print n, n.midi_id
             n.move(displacement)
+            self._evaluate_midi_event(n)
+            
         self.current_time += delta
         
     def on_update(self):
@@ -551,6 +520,32 @@ class PlayerVerticalDisplay(AbstractDisplay):
         pos = (note_map['pos'][0], ypos)
         return pos
 
+    def _evaluate_midi_event(self, note_sprite):
+        """
+        when the events note_on and note_off have to be launched 
+        (this is not the best timing method, but it might work for a demo)
+        when touches bottom
+        """
+        #print "evaluating note midi event"
+        #TODO move this from hte notes to somewhere else, because this breaks portability and other things
+        # .... a refactoring WILL BE NECESSARY!!
+        #maybe see to pass this method as parameter in the note creation ?
+        px,py,pw,ph = self.rect
+        x,y,w,h = note_sprite.rect
+        
+        #check it went out of the screen (to the bottom)
+        if y >(py+ph):
+            # turn of midi if active
+            if note_sprite.state == ButtonStates.pressed:
+                note_sprite.on_note_release()
+            #erase from all the display groups
+            #self.remove(*self.groups)
+            note_sprite.kill()
+        #check turn midi_on
+        elif note_sprite.state == ButtonStates.passive and (y+h)>(py+ph):
+            note_sprite.on_note_press()
+
+
 ################################################################################
 
 class VerticalDial(pygame.sprite.Sprite):
@@ -652,15 +647,39 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         pos = (xpos, ypos)
         return pos
 
+    def _evaluate_midi_event(self, note_sprite):
+        """
+        when the events note_on and note_off have to be launched 
+        (this is not the best timing method, but it might work for a demo)
+        when touches bottom
+        """
+        #print "evaluating note midi event"
+        #TODO move this from hte notes to somewhere else, because this breaks portability and other things
+        # .... a refactoring WILL BE NECESSARY!!
+        #maybe see to pass this method as parameter in the note creation ?
+        px,py,pw,ph = self.rect
+        x,y,w,h = note_sprite.rect
+        
+        #check it went out of the screen (to the left)
+        if x+w < 0:
+            #erase from all the display groups
+            #self.remove(*self.groups)
+            note_sprite.kill()
+        #check if should turn it off
+        elif x+w < self.size[0] * self.LEFT_OVERLAY_PROPORTION:
+            # turn of midi if active
+            if note_sprite.state == ButtonStates.pressed:
+                note_sprite.on_note_release()
+        #check turn midi_on
+        elif note_sprite.state == ButtonStates.passive and x < self.size[0] * self.LEFT_OVERLAY_PROPORTION:
+            note_sprite.on_note_press()
 
     def update(self):
         """
         """
         #print "drawing "
         self.allgroups.update()
-
         self.notes_group.update()
-        
         self.overlay_group.update()
 
     def on_draw(self, screen):

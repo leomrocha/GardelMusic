@@ -45,6 +45,7 @@ class Director:
 
         #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height))
         self.screen = pygame.display.set_mode((self.scene_width * 8/10, self.scene_height * 8/10))
+        #self.screen = pygame.display.set_mode((self.scene_width * 5/10, self.scene_height * 5/10))
         #activate when the game is ready for playing
         #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height), pygame.FULLSCREEN, 32)
 
