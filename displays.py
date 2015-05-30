@@ -126,8 +126,9 @@ class NoteSprite(pygame.sprite.Sprite):
         (this is not the best timing method, but it might work for a demo)
         when touches bottom
         """
-        #TODO make this method generic for any kind of movement, 
-        #for the moment will be only vertical movement
+        #TODO move this from hte notes to somewhere else, because this breaks portability and other things
+        # .... a refactoring WILL BE NECESSARY!!
+        #maybe see to pass this method as parameter in the note creation ?
         px,py,pw,ph = self.parent_rect
         x,y,w,h = self.rect
         
@@ -284,6 +285,7 @@ class AbstractDisplay(object):
         NoteSprite.groups = self.notes_group
         
         self.notes = []
+        self.displacement = Displacement.VERTICAL_DOWN
 
         #Default
         self.screen_time = screen_time
@@ -362,11 +364,6 @@ class AbstractDisplay(object):
         self.stop()
         #TODO send a signal to parent to tell the rest of the app that reproduction ended
         
-    def on_update(self):
-        """
-        """
-        raise NotImplemented("on_update not implemented, MUST subclass it")
-
     def on_draw(self, screen):
         """
         """
@@ -383,8 +380,6 @@ class AbstractDisplay(object):
     def on_event(self, event):
         """
         """
-        
-        
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             #TODO make this more efficient, for the moment is doing a loop on every note
             #should calculate which notes are better to call in an efficient way
@@ -491,7 +486,7 @@ class AbstractDisplay(object):
                 if note_map is not None:
                     size = self._calc_note_size(midi_id, sec_duration, note_map)
                     pos = self._calc_note_pos(midi_id, size, sec_start, sec_duration, sec_end, note_map)
-                    note = NoteSprite(self.rect, size, pos, midi_id, tick_start, tick_end, self.midi_publish, note_map['synesthesia'])
+                    note = NoteSprite(self.rect, size, pos, midi_id, tick_start, tick_end, self.midi_publish, note_map['synesthesia'], self.displacement)
                     synesthesia = note_map['synesthesia']
                     #
                     self.notes.append(note)
@@ -572,7 +567,10 @@ class PlayerHorizontalDisplay(AbstractDisplay):
     """
     display that shows a given file
     input format: MIDI
-    TODO add annotations (for hand and 
+    TODO many things ...
+        - hand annotations
+        - finger annotations
+        - other nice thingies
     """
     def __init__(self, screen, midi_pubsub, size, pos=(0,0), screen_time=15):
         """
@@ -587,8 +585,43 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         self.REF_HEIGHT_VERTICAL = 400
         self.REF_WIDTH_VERTICAL = 1040
 
-        
         super(PlayerHorizontalDisplay, self).__init__(screen, midi_pubsub, bkg, size, pos, screen_time)
+        
+        self.displacement = Displacement.HORIZONTAL_LEFT
+        
+        self.overlay_group = pygame.sprite.Group()
+
+        self.LEFT_OVERLAY_PROPORTION =  1./6
+        self.RIGHT_OVERLAY_PROPORTION =  1./4 #2. / 6
+        
+        #left overlay
+
+        left_overlay_size = (size[0] * self.LEFT_OVERLAY_PROPORTION ,size[1])
+        self.left_overlay = pygame.sprite.Sprite()
+        self.left_overlay.image = pygame.Surface(left_overlay_size, pygame.HWSURFACE, 32)
+        self.left_overlay.image.set_alpha(128)
+        #self.left_overlay.image.fill((61,61,61))     # fill black
+        self.left_overlay.image.fill((51,53,64))     # fill black
+        #self.left_overlay.image.fill((250,250,250))     # fill white ->should make a white background behind the keys for the transparency to work well, but black behind it to fill the borders in black
+        self.left_overlay.rect = self.left_overlay.image.get_rect()
+        self.left_overlay.rect.x = pos[0]
+        self.left_overlay.rect.y = pos[1]
+
+        self.overlay_group.add(self.left_overlay)
+        #right overlay
+        right_overlay_size = (size[0] * self.RIGHT_OVERLAY_PROPORTION ,size[1])
+        self.right_overlay = pygame.sprite.Sprite()
+        self.right_overlay.image = pygame.Surface(right_overlay_size, pygame.HWSURFACE, 32)
+        self.right_overlay.image.set_alpha(128)
+        #self.right_overlay.image.fill((61,61,61))     # fill black
+        self.right_overlay.image.fill((51,53,64))     # fill black
+        #self.right_overlay.image.fill((250,250,250))     # fill white ->should make a white background behind the keys for the transparency to work well, but black behind it to fill the borders in black
+        self.right_overlay.rect = self.right_overlay.image.get_rect()
+        self.right_overlay.rect.x = pos[0] + size[0] - right_overlay_size[0]
+        self.right_overlay.rect.y = pos[1]
+
+        self.overlay_group.add(self.right_overlay)
+
         
     def _get_note_displacement(self, delta_time):
         """
@@ -618,6 +651,34 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         #ypos = - (self.pos[1] * sec_start / self.screen_time) -height + self.pos[1]
         pos = (xpos, ypos)
         return pos
+
+
+    def update(self):
+        """
+        """
+        #print "drawing "
+        self.allgroups.update()
+
+        self.notes_group.update()
+        
+        self.overlay_group.update()
+
+    def on_draw(self, screen):
+        """
+        """
+        #print "drawing "
+        screen.blit(self.background, self.pos)
+        self.allgroups.clear(screen, self.background)
+        self.allgroups.update()
+        self.allgroups.draw(screen)
+
+        self.notes_group.clear(screen, self.background)
+        self.notes_group.update()
+        self.notes_group.draw(screen)
+        
+        #self.overlay_group.clear(screen, self.background)
+        self.overlay_group.update()
+        self.overlay_group.draw(screen)
 
 ################################################################################
 
