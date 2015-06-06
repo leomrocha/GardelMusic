@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 """
+Play Scene
 This is a basic play scene where there are 2 parts:
 The display, where the music is shown
 The instrument, that shows what is happening and/or what should be happening with the instrument
