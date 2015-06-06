@@ -599,17 +599,21 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         """
         """
         width = self.size[0] * sec_duration / self.screen_time
+        height = self.size[1]/self.REF_NUMBER_KEYS
         #TODO duplicate height of notes to make them more visible
-        size = [width, self.size[1]/self.REF_NUMBER_KEYS] #TODO recalculate this
+        size = [width, height] #TODO recalculate this
         return size
 
     def _calc_note_pos(self, midi_id, size, sec_start, sec_duration, sec_end, note_map):
         """
         """
+        
         width = size[0]
         xpos = (self.size[0] * sec_start / self.screen_time) + (self.size[0] * (1-self.RIGHT_OVERLAY_PROPORTION))
         #TODO take in account duplicated height of notes to make them more visible
+        #TODO recalculate positions to make them show in the right place in the display!!
         vpos = self.REF_HEIGHT * note_map['pos'][0] / self.REF_WIDTH_VERTICAL
+        #ypos = self.size[1] - vpos + self.pos[1]
         ypos = self.size[1] - vpos
         pos = (xpos, ypos)
         return pos
@@ -672,14 +676,15 @@ class DialSprite(pygame.sprite.Sprite):
     """
     """
     #TODO all this implementation for the moment is a DUMMY, do it all
-    def __init__(self, parent_rect, size, pos, synesthesia):
+    def __init__(self, pos, size):
         """
         """
         super(DialSprite, self).__init__()
         
         self.images = []
         
-        self.x,self.y = pos
+        #pos is the initial position, will not change, used for reset pos
+        self.x,self.y = self.pos = pos
         w,h = size
         #if key is black
         self.rect = pygame.Rect([self.x,self.y,w,h])
@@ -687,13 +692,15 @@ class DialSprite(pygame.sprite.Sprite):
         #create and append the pressed image with the same size as the background image
         self.image_off = pygame.Surface([self.rect.width, self.rect.height], pygame.HWSURFACE, 32)
         #replacement with subpixel library
-        self.image_off.set_alpha(128)
-        self.image_off.fill(self.synesthesia)
+        #self.image_off.set_alpha(128)
+        self.image_off.set_alpha(220)
+        self.image_off.fill((255,70,58))
         self.subpixel_image_off = SubPixelSurface(self.image_off, 5, 5)
         
         self.image_on = pygame.Surface([self.rect.width, self.rect.height], pygame.HWSURFACE, 32)
-        #self.image_off.set_alpha(255)
-        self.image_on.fill(self.synesthesia)
+        #self.image_off.set_alpha(128)
+        self.image_off.set_alpha(220)
+        self.image_on.fill((76,255,95))
         self.subpixel_image_on = SubPixelSurface(self.image_on , 5, 5)
         
         #append rest image        
@@ -804,12 +811,22 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         #updating, to avoid interruption of the function ... ??
         self.updating = False
         
-        self._setup_background()
-        self._draw_background()
+        self._set_background()
+        
+        self.dial = None
+        self._set_dial()
         
         self._set_overlay()
         
-    def _setup_background(self):
+    def _set_dial(self):
+        """
+        """
+        pos = (self.pos[0] + self.size[0] * self.LEFT_OVERLAY_PROPORTION, self.pos[1])
+        size = (2,self.size[1])
+        self.dial = DialSprite(pos=pos, size=size)
+        self.dial_group.add(self.dial)        
+        
+    def _set_background(self):
         """
         """
         self.bkg_white = pygame.Surface([self.size[0], self.size[1]], pygame.HWSURFACE, 32)
@@ -830,6 +847,7 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
     def on_update(self):
         """
         """
+        self.update()
         #self._draw_background()
         #TODO this method has to be eliminated (when the refactoring takes place for not breaking the other displays)
         #update dial
@@ -872,12 +890,15 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         #self.overlay_group.clear(screen, self.background)
         self.overlay_group.update()
         self.overlay_group.draw(screen)
-        pass
 
-    def on_event(self, event):
-        """
-        """
-        pass
+        #self.dial_group.clear(screen, self.background)
+        self.dial_group.update()
+        self.dial_group.draw(screen)
+
+    #def on_event(self, event):
+    #    """
+    #    """
+    #    pass
         
     def _calc_note_size(self, midi_id, sec_duration, note_map):
         """
@@ -895,9 +916,11 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         
         k_height = 2 * self.size[1]/REF_NUMBER_KEYS
         
-        center_y = (midi_id - 21) * self.size[1] / REF_NUMBER_KEYS
+        #center_y = self.size[1] - ( (midi_id - 21) * self.size[1] / REF_NUMBER_KEYS )
+        #center_y = self.pos[1] + self.size[1] -( (midi_id - 21) * self.size[1] / REF_NUMBER_KEYS )
+        center_y =  ( (midi_id - 21) * self.size[1] / REF_NUMBER_KEYS )
         vpos = center_y - k_height / 2.
-        ypos = self.size[1] - vpos
+        ypos = self.size[1] - vpos + self.pos[1]
         pos = (xpos, ypos)
         return pos
 
