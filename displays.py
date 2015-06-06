@@ -747,7 +747,6 @@ class DialSprite(pygame.sprite.Sprite):
         self.image_off = self.subpixel_image_off.at(self.x, self.y)
         #reset state 
         self.state = ButtonStates.passive
-        self.on_note_off()
         
     def on_draw(self, scene):
         """
@@ -844,17 +843,59 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         self.screen.blit(self.bkg_colors, self.pos)
         self.screen.blit(self.bkg_lines, self.pos)
 
+    def _evaluate_midi_event(self):
+        """
+        """
+        #TODO evaluate intersection between dial and notes!
+        notes = self.notes_group.sprites()
+        if len(notes)<=0:
+            self.on_end_playing()
+        for n in notes:
+            #print n, n.midi_id
+            if pygame.sprite.collide_rect(self.dial, n):
+                n.on_note_on()
+            #TODO turn notes OFF!!
+
+    def _get_dial_displacement(self, delta_time):
+        """
+        """
+        hmove = self.size[0] * delta_time / self.screen_time
+        return (hmove, 0)
+        
+    def _update_dial(self, extra_time=0):
+        """
+        """
+        #calculate how much time was elapsed
+        now = time.time()
+        delta = now - self.last_update + extra_time
+        self.last_update = now
+        #calculate vertical movement
+        #WARNING, TODO modify method name (originally was for notes only not for a dial)
+        displacement = self._get_dial_displacement(delta)
+        self.dial.move(displacement)
+        #verify dial positionm:
+        #  if dial got over right overlay, reset position
+        if self.dial.x >= self.size[0] * (1-self.RIGHT_OVERLAY_PROPORTION):
+            self.dial.reset_pos()
+            #update notes positions:
+            n_displ = - self.size[0] * (1 - self.LEFT_OVERLAY_PROPORTION - self.RIGHT_OVERLAY_PROPORTION)
+            notes = self.notes_group.sprites()
+            #if len(notes)<=0:
+            #    self.on_end_playing()
+            for n in notes:
+                #print n, n.midi_id
+                n.move((n_displ,0))
+        #verify dial inter
+        self.current_time += delta
+        self._evaluate_midi_event()
+        
     def on_update(self):
         """
         """
-        self.update()
-        #self._draw_background()
-        #TODO this method has to be eliminated (when the refactoring takes place for not breaking the other displays)
-        #update dial
-        #update notes
-        #update the rest
-        pass
-        
+        if self.playing:
+            self._update_dial()
+
+
     def update(self):
         """
         """
