@@ -530,6 +530,20 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         - finger annotations
         - other nice thingies
     """
+
+    REF_HEIGHT = 400
+    REF_WIDTH = 800
+    REF_NUMBER_NOTES = 88
+    
+    #TODO take out all this hardcoded values fromo here, 
+    #this are the dimensions of the vertical display and the calculations from keyboard mappings come from here        
+    REF_HEIGHT_VERTICAL = 400
+    REF_WIDTH_VERTICAL = 1040
+
+
+    LEFT_OVERLAY_PROPORTION =  1./6
+    RIGHT_OVERLAY_PROPORTION =  1./4 #2. / 6
+        
     def __init__(self, screen, midi_pubsub, size, pos=(0,0), screen_time=15, bkg=None):
         """
         """
@@ -537,21 +551,9 @@ class PlayerHorizontalDisplay(AbstractDisplay):
             bkg = pygame.image.load("assets/images/displays/horizontal_display_lines.png").convert_alpha()
         self.background = pygame.transform.scale(bkg, size)
         
-        self.REF_HEIGHT = 400
-        self.REF_WIDTH = 800
-        self.REF_NUMBER_NOTES = 88
-        
-        #TODO take out all this hardcoded values fromo here, 
-        #this are the dimensions of the vertical display and the calculations from keyboard mappings come from here        
-        self.REF_HEIGHT_VERTICAL = 400
-        self.REF_WIDTH_VERTICAL = 1040
-
         super(PlayerHorizontalDisplay, self).__init__(screen, midi_pubsub, size, pos, screen_time)
         
         self.overlay_group = pygame.sprite.Group()
-
-        self.LEFT_OVERLAY_PROPORTION =  1./6
-        self.RIGHT_OVERLAY_PROPORTION =  1./4 #2. / 6
         
         self._set_overlay()
 
@@ -750,7 +752,9 @@ class DialSprite(pygame.sprite.Sprite):
         self.image = self.images[self.image_index]
 ################################################################################
 
+#class PlayerDialDisplay(AbstractDisplay):
 class PlayerDialDisplay(PlayerHorizontalDisplay):
+#class PlayerDialDisplay(object):
     """
     display that shows a given file
     input format: MIDI
@@ -764,21 +768,48 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
     def __init__(self, screen, midi_pubsub, size, pos=(0,0), screen_time=15):
         """
         """
+        #vars
+        self.screen = screen
+        self.midi_pubsub = midi_pubsub
+        self.size = size
+        self.pos = pos
+        self.screen_time = screen_time
         
-        #load background
-        sheet_background_colors.png
-        bkg = pygame.image.load("assets/images/sheet/sheet_lines.png").convert_alpha()
-
+        self.rect = pygame.rect.Rect(pos, size)
+        #sprite groups   
         #self.background_group = pygame.sprite.Group()
-        #self.notes_group = pygame.sprite.Group()
-        #self.overlay_group = pygame.sprite.Group()
+        self.notes_group = pygame.sprite.Group()
+        self.overlay_group = pygame.sprite.Group()
         self.dial_group = pygame.sprite.Group()
         
-        super(PlayerDialDisplay, self).__init__(screen, midi_pubsub, bkg, size, pos, screen_time, bkg)
+        self._setup_background()
+        self._draw_background()
         
+        self._set_overlay()
+        
+    def _setup_background(self):
+        """
+        """
+        self.bkg_white = pygame.Surface([self.size[0], self.size[1]], pygame.HWSURFACE, 32)
+        #replacement with subpixel library
+        self.bkg_white.fill((250,250,240))
+        bkg_colors = pygame.image.load("assets/images/sheet/sheet_background_colors.png").convert_alpha()
+        self.bkg_colors = pygame.transform.scale(bkg_colors, self.size)
+        bkg_lines = pygame.image.load("assets/images/sheet/sheet_lines.png").convert_alpha()
+        self.bkg_lines = pygame.transform.scale(bkg_lines, self.size)
+        
+    def _draw_background(self):
+        """
+        """
+        self.screen.blit(self.bkg_white, self.pos)
+        self.screen.blit(self.bkg_colors, self.pos)
+        self.screen.blit(self.bkg_lines, self.pos)
+
     def on_update(self):
         """
         """
+        #self._draw_background()
+        #TODO this method has to be eliminated (when the refactoring takes place for not breaking the other displays)
         #update dial
         #update notes
         #update the rest
@@ -787,68 +818,49 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
     def update(self):
         """
         """
-        self.allgroups.update()
+        #update vals, positions and all the calculations
+        #update dial
+        #update notes
+        #update the rest
+
+        #update screen now
+        #self._draw_background()
+        
         self.notes_group.update()
-        self.dial_group.update()
         self.overlay_group.update()
+        self.dial_group.update()
         #update dial
         #update notes
         #update the rest
         pass
         
-    def on_draw(self):
+    def on_draw(self, screen):
         """
         """
-        #draw 
+        #draw background
+        self._draw_background()
+        #screen.blit(self.bkg_colors, self.pos)
+        #screen.blit(self.bkg_lines, self.pos)
         #draw all the rest 
         #draw dial
-        pass
-    
-
-    def _calc_note_size(self, midi_id, sec_duration, note_map):
-        """
-        """
-        width = self.size[0] * sec_duration / self.screen_time
-        size = [width, self.size[1]/self.REF_NUMBER_NOTES] #TODO recalculate this
-        return size
-
-    def _calc_note_pos(self, midi_id, size, sec_start, sec_duration, sec_end, note_map):
-        """
-        """
-        width = size[0]
-        xpos = (self.size[0] * sec_start / self.screen_time) + (self.size[0] * (1-self.RIGHT_OVERLAY_PROPORTION))
-        vpos = self.REF_HEIGHT * note_map['pos'][0] / self.REF_WIDTH_VERTICAL
-        ypos = self.size[1] - vpos
-        pos = (xpos, ypos)
-        return pos
-
-    def _evaluate_midi_event(self, note_sprite):
-        """
-        when the events note_on and note_off have to be launched 
-        (this is not the best timing method, but it might work for a demo)
-        when touches bottom
-        """
-        #print "evaluating note midi event"
-        #TODO move this from hte notes to somewhere else, because this breaks portability and other things
-        # .... a refactoring WILL BE NECESSARY!!
-        #maybe see to pass this method as parameter in the note creation ?
-        px,py,pw,ph = self.rect
-        x,y,w,h = note_sprite.rect
+        self.notes_group.clear(screen, self.bkg_white)
+        self.notes_group.update()
+        self.notes_group.draw(screen)
         
-        #check it went out of the screen (to the left)
-        if x+w < 0:
-            #erase from all the display groups
-            #self.remove(*self.groups)
-            note_sprite.kill()
-        #check if should turn it off
-        elif x+w < self.size[0] * self.LEFT_OVERLAY_PROPORTION:
-            # turn of midi if active
-            if note_sprite.state == ButtonStates.pressed:
-                note_sprite.on_note_release()
-        #check turn midi_on
-        elif note_sprite.state == ButtonStates.passive and x < self.size[0] * self.LEFT_OVERLAY_PROPORTION:
-            note_sprite.on_note_press()
+        #self.overlay_group.clear(screen, self.background)
+        self.overlay_group.update()
+        self.overlay_group.draw(screen)
+        pass
 
+    def on_event(self, event):
+        """
+        """
+        pass
+        
+    def set_midi_info(self, midi_info, keyboard_map):
+        """
+        """
+        pass
         
 ################################################################################
 
