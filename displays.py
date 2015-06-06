@@ -213,7 +213,7 @@ class AbstractDisplay(object):
         
         self.notes_group = pygame.sprite.Group()
         # LayeredUpdates instead of group to draw in correct order
-        self.allgroups = pygame.sprite.Group()
+        #self.allgroups = pygame.sprite.Group()
         
         #KeySprite.groups = self.allkeys, self.allgroups
         #NoteSprite.groups = self.allgroups, self.notes_group
@@ -316,8 +316,8 @@ class AbstractDisplay(object):
         #print "drawing "
         #screen.blit(self.background, self.pos)
         #self.allgroups.clear(screen, self.background)
-        self.allgroups.update()
-        self.allgroups.draw(screen)
+        #self.allgroups.update()
+        #self.allgroups.draw(screen)
 
         #self.notes_group.clear(screen, self.background)
         self.notes_group.update()
@@ -387,7 +387,7 @@ class AbstractDisplay(object):
         """
         cleans all the notes in the current buffer
         """
-        self.allgroups.empty()
+        #self.allgroups.empty()
         self.notes_group.empty()
         self.notes[:] = []
     
@@ -533,7 +533,7 @@ class PlayerHorizontalDisplay(AbstractDisplay):
 
     REF_HEIGHT = 400
     REF_WIDTH = 800
-    REF_NUMBER_NOTES = 88
+    REF_NUMBER_KEYS = 88
     
     #TODO take out all this hardcoded values fromo here, 
     #this are the dimensions of the vertical display and the calculations from keyboard mappings come from here        
@@ -599,7 +599,8 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         """
         """
         width = self.size[0] * sec_duration / self.screen_time
-        size = [width, self.size[1]/self.REF_NUMBER_NOTES] #TODO recalculate this
+        #TODO duplicate height of notes to make them more visible
+        size = [width, self.size[1]/self.REF_NUMBER_KEYS] #TODO recalculate this
         return size
 
     def _calc_note_pos(self, midi_id, size, sec_start, sec_duration, sec_end, note_map):
@@ -607,6 +608,7 @@ class PlayerHorizontalDisplay(AbstractDisplay):
         """
         width = size[0]
         xpos = (self.size[0] * sec_start / self.screen_time) + (self.size[0] * (1-self.RIGHT_OVERLAY_PROPORTION))
+        #TODO take in account duplicated height of notes to make them more visible
         vpos = self.REF_HEIGHT * note_map['pos'][0] / self.REF_WIDTH_VERTICAL
         ypos = self.size[1] - vpos
         pos = (xpos, ypos)
@@ -782,6 +784,26 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         self.overlay_group = pygame.sprite.Group()
         self.dial_group = pygame.sprite.Group()
         
+        self.notes = []
+
+        #some constant calculations:
+        #initial x_pos for dial and notes
+        self.x0 = size[0] * self.LEFT_OVERLAY_PROPORTION
+        #area where the 
+        self.play_time = self.screen_time * (1 - self.LEFT_OVERLAY_PROPORTION - self.RIGHT_OVERLAY_PROPORTION)
+        
+        #Default
+        self.screen_time = screen_time
+        #Keep track of the play time
+        self.current_time = 0
+        #keep track of the displacement
+        self.current_displacement = 0
+        #timestamp of last update
+        self.last_update = time.time()
+        self.playing = False
+        #updating, to avoid interruption of the function ... ??
+        self.updating = False
+        
         self._setup_background()
         self._draw_background()
         
@@ -857,11 +879,28 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         """
         pass
         
-    def set_midi_info(self, midi_info, keyboard_map):
+    def _calc_note_size(self, midi_id, sec_duration, note_map):
         """
         """
-        pass
+        width = self.size[0] * sec_duration / self.screen_time
+        height = 2 * self.size[1]/REF_NUMBER_KEYS
+        size = [width,  height]  #TODO recalculate this
+        return size
+
+    def _calc_note_pos(self, midi_id, size, sec_start, sec_duration, sec_end, note_map):
+        """
+        """
+        xpos = (self.size[0] * sec_start / self.screen_time) + self.x0 
+        #TODO warning take out the hardcoded 21
         
+        k_height = 2 * self.size[1]/REF_NUMBER_KEYS
+        
+        center_y = (midi_id - 21) * self.size[1] / REF_NUMBER_KEYS
+        vpos = center_y - k_height / 2.
+        ypos = self.size[1] - vpos
+        pos = (xpos, ypos)
+        return pos
+
 ################################################################################
 
 class PlayerSheetDisplay(AbstractDisplay):
