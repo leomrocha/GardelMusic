@@ -191,7 +191,7 @@ class PlayerSheetDisplay(object):
     def play(self):
         """
         """
-        #print "calling play"
+        print "calling play"
         self.playing = True
         self.last_update = time.time()
                 
@@ -453,10 +453,12 @@ class PlayerSheetDisplay(object):
     def _evaluate_midi_event(self):
         """
         """
-        notes = self.notes_group.sprites()
-        if len(notes)<=0 or self.dial.x > (self.notes[-1].x + self.notes[-1].size[0]):
-            #print self.notes[-1]
-            self.on_end_playing()
+        notes = self.lh_notes_group.sprites()
+        notes.extend(self.rh_notes_group.sprites())
+        #if len(notes)<=0 or self.dial.x > (self.notes[-1].x + self.notes[-1].size[0]):
+        #    print "midi file end"
+        #    print self.notes[-1]
+        #    self.on_end_playing()
 
         #turn off notes
         for n in self.notes_playing:
@@ -482,6 +484,7 @@ class PlayerSheetDisplay(object):
     def _update_dial(self, extra_time=0):
         """
         """
+        print "updating dial"
         #calculate how much time was elapsed
         now = time.time()
         delta = now - self.last_update + extra_time
@@ -495,7 +498,9 @@ class PlayerSheetDisplay(object):
             self.dial.reset_pos()
             #update notes positions:
             n_displ = - self.size[0] * (1 - self.LEFT_OVERLAY_PROPORTION - self.RIGHT_OVERLAY_PROPORTION)
-            notes = self.notes_group.sprites()
+            #notes = self.notes_group.sprites()
+            notes = self.lh_notes_group.sprites()
+            notes.extend(self.rh_notes_group.sprites())
             #if len(notes)<=0:
             #    self.on_end_playing()
             for n in notes:
