@@ -785,14 +785,13 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         
         self.rect = pygame.rect.Rect(pos, size)
         #sprite groups   
-        #self.background_group = pygame.sprite.Group()
         self.notes_group = pygame.sprite.Group()
         self.overlay_group = pygame.sprite.Group()
         self.dial_group = pygame.sprite.Group()
         
         self.notes = []
         self.notes_playing = []
-        self.notes_on_display = []
+        #self.notes_on_display = []
         
         #some constant calculations:
         #initial x_pos for dial and notes
@@ -853,7 +852,6 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
             #print self.notes[-1]
             self.on_end_playing()
 
-        #self.notes_on_display
         #turn off notes
         for n in self.notes_playing:
             if not pygame.sprite.collide_rect(self.dial, n):
@@ -862,7 +860,7 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         #turn on notes
         for n in notes:
             if n not in self.notes_playing:
-                # add condition to avoid comparing with notes beyond the screen.
+                #TODO add condition to avoid comparing with notes beyond the screen.
                 #print n, n.midi_id
                 if pygame.sprite.collide_rect(self.dial, n):
                     n.on_note_on()
@@ -883,7 +881,6 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         delta = now - self.last_update + extra_time
         self.last_update = now
         #calculate vertical movement
-        #WARNING, TODO modify method name (originally was for notes only not for a dial)
         displacement = self._get_dial_displacement(delta)
         self.dial.move(displacement)
         #verify dial positionm:
@@ -932,47 +929,26 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
     def update(self):
         """
         """
-        #update vals, positions and all the calculations
-        #update dial
-        #update notes
-        #update the rest
-
-        #update screen now
-        #self._draw_background()
         
         self.notes_group.update()
         self.overlay_group.update()
         self.dial_group.update()
-        #update dial
-        #update notes
-        #update the rest
-        pass
         
     def on_draw(self, screen):
         """
         """
         #draw background
         self._draw_background()
-        #screen.blit(self.bkg_colors, self.pos)
-        #screen.blit(self.bkg_lines, self.pos)
-        #draw all the rest 
-        #draw dial
+
         self.notes_group.clear(screen, self.bkg_white)
         self.notes_group.update()
         self.notes_group.draw(screen)
-        
-        #self.overlay_group.clear(screen, self.background)
+
         self.overlay_group.update()
         self.overlay_group.draw(screen)
 
-        #self.dial_group.clear(screen, self.background)
         self.dial_group.update()
         self.dial_group.draw(screen)
-
-    #def on_event(self, event):
-    #    """
-    #    """
-    #    pass
         
     def _calc_note_size(self, midi_id, sec_duration, note_map):
         """
@@ -986,12 +962,11 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         """
         """
         xpos = (self.size[0] * sec_start / self.screen_time) + self.x0 
-        #TODO warning take out the hardcoded 21
-        
         k_height = 2 * self.size[1]/REF_NUMBER_KEYS
         
         #center_y = self.size[1] - ( (midi_id - 21) * self.size[1] / REF_NUMBER_KEYS )
         #center_y = self.pos[1] + self.size[1] -( (midi_id - 21) * self.size[1] / REF_NUMBER_KEYS )
+        #TODO warning take out the hardcoded 21
         center_y =  ( (midi_id - 21) * self.size[1] / REF_NUMBER_KEYS )
         vpos = center_y - k_height / 2.
         ypos = self.size[1] - vpos + self.pos[1]
@@ -999,31 +974,4 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         return pos
 
 ################################################################################
-
-class PlayerSheetDisplay(AbstractDisplay):
-    """
-    display that shows a given file
-    input format: MIDI
-    TODO add annotations (for hand and 
-    """
-    def __init__(self, screen, pos, size):
-        """
-        """
-        pass
-        
-    def on_update(self):
-        """
-        """
-        pass
-    
-    def on_draw(self, scene):
-        """
-        """
-        pass
-        
-    def on_event(self, event):
-        """
-        """
-        pass
-
 
