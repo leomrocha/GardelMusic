@@ -80,6 +80,12 @@ class PlayScene(object):
                         image_active=os.path.join("assets","images","icons","ic_play_circle_pressed_o.png"),
                         )
         '''
+        self.hand_select_controls = controls.HandsControlBar(screen=self.screen,
+                                                            pos=(self.w - 340 , 10),
+                                                            size=(100,50),
+                                                            on_left_hand_callback=self.player_display.on_lh_toggle,
+                                                            on_right_hand_callback=self.player_display.on_rh_toggle, 
+                                                            )
         self.dirty = True
         
         ###test file names:
@@ -134,6 +140,7 @@ class PlayScene(object):
         #TEST
         self.player_display.on_update()
         self.playback_controls.on_update()
+        self.hand_select_controls.on_update()
         
     def on_event(self, event):
         """
@@ -141,6 +148,7 @@ class PlayScene(object):
         self.instrument.on_event(event)
         self.player_display.on_event(event)
         self.playback_controls.on_event(event)
+        self.hand_select_controls.on_event(event)
         #self.dirty = True
         pass
 
@@ -207,5 +215,5 @@ class PlayScene(object):
         Menu (go back, pause, stop, volume and so on)
         """
         self.playback_controls.on_draw(self.screen)
-        pass
+        self.hand_select_controls.on_draw(self.screen)
 

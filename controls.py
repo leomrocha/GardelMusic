@@ -153,6 +153,101 @@ class PlaybackControlBar(object):
         #for b in self.button_group:
         #    b.on_update()
         pass
+        
+        
+################################################################################
+#Hand Display Selection
+################################################################################
+        
+class HandsControlBar(object):
+    """
+    """
+    def __init__(self, screen, pos, size, on_left_hand_callback=None, on_right_hand_callback=None):
+        """
+        screen,
+        pos, 
+        size, 
+        on_left_hand_callback, 
+        on_right_hand_callback, 
+        """
+        #
+        self.screen = screen
+        self.pos = pos
+        self.size = size
+        
+        #calculate button size:
+        bh = size[1]
+        bw = min( size[0] / 2, bh)
+        bsize = (bw,bh)
+        #gruops
+        self.bkg_group = pygame.sprite.Group()
+        self.button_group = pygame.sprite.Group()
+        #here the background
+        self.background = pygame.sprite.Sprite()
+        self.background.image = pygame.Surface(size)
+        self.background.image.fill((61,61,61))     # fill black
+        #self.background.image.fill((250,250,250))     # fill white ->should make a white background behind the keys for the transparency to work well, but black behind it to fill the borders in black
+        self.background.rect = self.background.image.get_rect()
+        self.background.rect.x = pos[0]
+        self.background.rect.y = pos[1]
+        self.rect = self.background.rect
+        self.bkg_group.add(self.background)
+        ##
+        #here the buttons
+        
+        self.lh_toggle_button = ToggleButton(
+                            self.screen, 
+                            on_toggle_callback=on_left_hand_callback,
+                            size=bsize, 
+                            pos=(pos[0], pos[1]),
+                            image_passive=os.path.join("assets","images","controls","left_hand_grey.png"),
+                            image_active=os.path.join("assets","images","controls","left_hand_green.png"),
+                            )
+        #self.lh_toggle_button.current_state = ButtonStates.pressed
+        self.lh_toggle_button.activate()
+        
+        self.rh_toggle_button = ToggleButton(
+                            self.screen, 
+                            on_toggle_callback=on_right_hand_callback,
+                            size=bsize, 
+                            pos=(pos[0] + bw, pos[1]),
+                            image_passive=os.path.join("assets","images","controls","left_hand_grey.png"),
+                            image_active=os.path.join("assets","images","controls","left_hand_green.png"),
+                            )
+        #self.rh_toggle_button.current_state = ButtonStates.pressed
+        self.rh_toggle_button.activate()
+        
+        self.button_group.add(self.lh_toggle_button)
+        self.button_group.add(self.rh_toggle_button)
+        
+        self.dirty = True
+        
+    def on_draw(self, screen=None):
+        """
+        """
+        #self.white_keys_group.clear(screen, self.kb_background)
+        if screen is None:
+            screen = self.screen
+
+        self.bkg_group.draw(screen)
+
+        self.button_group.draw(screen)
+
+    def on_event(self, event):
+        """
+        """
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            for b in self.button_group.sprites():
+                b.on_event(event)
+        pass
+    
+    def on_update(self):
+        """
+        """
+        self.bkg_group.update()
+        self.button_group.update()
+
+        
 ################################################################################
 #Display Selection
 ################################################################################

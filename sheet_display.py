@@ -81,7 +81,7 @@ class PlayerSheetDisplay(object):
         #moving dial
         self.dial_group = pygame.sprite.Group()
         #buttons groups
-        self.button_group = pygame.sprite.Group()
+        #self.button_group = pygame.sprite.Group()
         
         self.notes = []
         self.lh_notes = []
@@ -103,29 +103,6 @@ class PlayerSheetDisplay(object):
         ## hand controls buttons
         bw = bh = int(self.LEFT_OVERLAY_PROPORTION / 4.)
         bsize = (bw, bh)
-        
-        self.lh_toggle_button = ToggleButton(
-                            self.screen, 
-                            on_toggle_callback=self.on_lh_toggle,
-                            size=bsize, 
-                            pos=(pos[0] + bw, pos[1]),
-                            image_passive=os.path.join("assets","images","controls","left_hand_grey.png"),
-                            image_active=os.path.join("assets","images","controls","left_hand_green.png"),
-                            )
-        self.lh_toggle_button.current_state = ButtonStates.pressed
-        
-        self.rh_toggle_button = ToggleButton(
-                            self.screen, 
-                            on_toggle_callback=self.on_lh_toggle,
-                            size=bsize, 
-                            pos=(pos[0] + bw, pos[1]),
-                            image_passive=os.path.join("assets","images","controls","left_hand_grey.png"),
-                            image_active=os.path.join("assets","images","controls","left_hand_grey.png"),
-                            )
-        self.rh_toggle_button.current_state = ButtonStates.pressed
-        
-        self.button_group.add(self.lh_toggle_button)
-        self.button_group.add(self.rh_toggle_button)
         
         #Default
         self.screen_time = screen_time
@@ -539,7 +516,7 @@ class PlayerSheetDisplay(object):
         self.overlay_group.update()
         self.dial_group.update()
         
-        self.button_group.update()
+        #self.button_group.update()
         
     def on_draw(self, screen):
         """
@@ -565,8 +542,8 @@ class PlayerSheetDisplay(object):
         self.dial_group.update()
         self.dial_group.draw(screen)
         
-        self.button_group.update()
-        self.button_group.draw(screen)
+        #self.button_group.update()
+        #self.button_group.draw(screen)
         
     def _calc_note_size(self, midi_id, sec_duration, note_map):
         """
