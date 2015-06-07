@@ -791,7 +791,9 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         self.dial_group = pygame.sprite.Group()
         
         self.notes = []
-
+        self.notes_playing = []
+        self.notes_on_display = []
+        
         #some constant calculations:
         #initial x_pos for dial and notes
         self.x0 = size[0] * self.LEFT_OVERLAY_PROPORTION
@@ -846,15 +848,26 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
     def _evaluate_midi_event(self):
         """
         """
-        #TODO evaluate intersection between dial and notes!
         notes = self.notes_group.sprites()
-        if len(notes)<=0:
+        if len(notes)<=0 or self.dial.x > (self.notes[-1].x + self.notes[-1].size[0]):
+            #print self.notes[-1]
             self.on_end_playing()
+
+        #self.notes_on_display
+        #turn off notes
+        for n in self.notes_playing:
+            if not pygame.sprite.collide_rect(self.dial, n):
+                n.on_note_off()
+                self.notes_playing.remove(n)
+        #turn on notes
         for n in notes:
-            #print n, n.midi_id
-            if pygame.sprite.collide_rect(self.dial, n):
-                n.on_note_on()
-            #TODO turn notes OFF!!
+            if n not in self.notes_playing:
+                # add condition to avoid comparing with notes beyond the screen.
+                #print n, n.midi_id
+                if pygame.sprite.collide_rect(self.dial, n):
+                    n.on_note_on()
+                    self.notes_playing.append(n)
+                
 
     def _get_dial_displacement(self, delta_time):
         """
@@ -888,13 +901,33 @@ class PlayerDialDisplay(PlayerHorizontalDisplay):
         #verify dial inter
         self.current_time += delta
         self._evaluate_midi_event()
+
+    def stop(self):
+        """
+        """
+        #turn off all notes
+        for n in self.notes_playing:
+            n.on_note_off()
+        self.notes_playing = []
+        #reset dial position
+        self.dial.reset_pos()
+        #print "calling stop"
+        self.playing = False
+        #recreate all notes buffer
+        self.notes_group.empty()
+        #add all the notes resetting their possitions
+        for n in self.notes:
+            self.notes_group.add(n)
+            n.reset_pos()
+        # set time to 0
+        self.current_time = 0
+
         
     def on_update(self):
         """
         """
         if self.playing:
             self._update_dial()
-
 
     def update(self):
         """
