@@ -211,8 +211,8 @@ class HandsControlBar(object):
                             on_toggle_callback=on_right_hand_callback,
                             size=bsize, 
                             pos=(pos[0] + bw, pos[1]),
-                            image_passive=os.path.join("assets","images","controls","left_hand_grey.png"),
-                            image_active=os.path.join("assets","images","controls","left_hand_green.png"),
+                            image_passive=os.path.join("assets","images","controls","right_hand_grey.png"),
+                            image_active=os.path.join("assets","images","controls","right_hand_green.png"),
                             )
         #self.rh_toggle_button.current_state = ButtonStates.pressed
         self.rh_toggle_button.activate()
