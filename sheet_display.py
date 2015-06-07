@@ -191,7 +191,7 @@ class PlayerSheetDisplay(object):
     def play(self):
         """
         """
-        print "calling play"
+        #print "calling play"
         self.playing = True
         self.last_update = time.time()
                 
@@ -455,11 +455,21 @@ class PlayerSheetDisplay(object):
         """
         notes = self.lh_notes_group.sprites()
         notes.extend(self.rh_notes_group.sprites())
-        #if len(notes)<=0 or self.dial.x > (self.notes[-1].x + self.notes[-1].size[0]):
-        #    print "midi file end"
-        #    print self.notes[-1]
-        #    self.on_end_playing()
-
+        #check midi playing end
+        midi_end = False
+        if len(notes)<=0:
+            midi_end = True
+        #TODO improve this hack because it's ugly and unefficient
+        elif len(self.notes_playing) <= 0:
+            #print "no notes playing"
+            lhnl = len([n for n in self.lh_notes_group if ((n.x + n.size[0]) > self.dial.x)])
+            rhnl = len([n for n in self.rh_notes_group if ((n.x + n.size[0]) > self.dial.x)])
+            if lhnl <= 0 and rhnl <=0:
+                #print "no more notes ", lhnl, rhnl 
+                midi_end = True
+        if midi_end:
+            #print "midi file end"
+            self.on_end_playing()
         #turn off notes
         for n in self.notes_playing:
             if not pygame.sprite.collide_rect(self.dial, n):
@@ -484,7 +494,7 @@ class PlayerSheetDisplay(object):
     def _update_dial(self, extra_time=0):
         """
         """
-        print "updating dial"
+        #print "updating dial"
         #calculate how much time was elapsed
         now = time.time()
         delta = now - self.last_update + extra_time
