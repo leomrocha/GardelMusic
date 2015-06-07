@@ -50,8 +50,6 @@ class SheetLayer(object):
 class PlayerSheetDisplay(object):
     """
     """
-    
-    
     def __init__(self, screen, midi_pubsub, size, pos=(0,0), screen_time=15):
         """
         screen, 
@@ -94,8 +92,8 @@ class PlayerSheetDisplay(object):
         self.rh_notes_playing = []
         #self.notes_on_display = []
         
-        self.lh_active = True
-        self.rh_active = True
+        self.lh_active = True #False  #
+        self.rh_active = True #False  #
         #some constant calculations:
         #initial x_pos for dial and notes
         self.x0 = size[0] * self.LEFT_OVERLAY_PROPORTION
@@ -114,7 +112,8 @@ class PlayerSheetDisplay(object):
                             image_passive=os.path.join("assets","images","controls","left_hand_grey.png"),
                             image_active=os.path.join("assets","images","controls","left_hand_green.png"),
                             )
-        self.lh_toggle_button.active = True
+        self.lh_toggle_button.current_state = ButtonStates.pressed
+        
         self.rh_toggle_button = ToggleButton(
                             self.screen, 
                             on_toggle_callback=self.on_lh_toggle,
@@ -123,7 +122,8 @@ class PlayerSheetDisplay(object):
                             image_passive=os.path.join("assets","images","controls","left_hand_grey.png"),
                             image_active=os.path.join("assets","images","controls","left_hand_grey.png"),
                             )
-        self.rh_toggle_button.active = True
+        self.rh_toggle_button.current_state = ButtonStates.pressed
+        
         self.button_group.add(self.lh_toggle_button)
         self.button_group.add(self.rh_toggle_button)
         
@@ -393,11 +393,13 @@ class PlayerSheetDisplay(object):
         if len(midi_info.tracks) >= 1:
             #set right track
             rt = midi_info.tracks[0]
-            self.__set_midi_track(rt, self.rh_notes, self.rh_notes_group, keyboard_map)
+            if self.rh_active:
+                self.__set_midi_track(rt, self.rh_notes, self.rh_notes_group, keyboard_map)
         if len(midi_info.tracks) >= 2:
             #left track
             lt = midi_info.tracks[1]
-            self.__set_midi_track(lt, self.lh_notes, self.lh_notes_group, keyboard_map)
+            if self.lh_active:
+                self.__set_midi_track(lt, self.lh_notes, self.lh_notes_group, keyboard_map)
         #for the moment discards all other track        
         
         #TODO hide/erase loader overlay
@@ -506,6 +508,8 @@ class PlayerSheetDisplay(object):
     def on_update(self):
         """
         """
+        
+        self.update()
         if self.playing:
             self._update_dial()
 
@@ -519,6 +523,7 @@ class PlayerSheetDisplay(object):
         
         self.overlay_group.update()
         self.dial_group.update()
+        
         self.button_group.update()
         
     def on_draw(self, screen):
