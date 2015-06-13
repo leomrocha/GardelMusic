@@ -14,6 +14,7 @@ from file_loader import ticks2sec
 from button import *
 #
 import keyboard_mappings
+import sheet_mappings
 import synesthesia
 
 from displays import *
@@ -570,15 +571,24 @@ class PlayerSheetDisplay(object):
     def _calc_note_pos(self, midi_id, size, sec_start, sec_duration, sec_end, note_map):
         """
         """
-        #TODO TODO TODO all this method
         xpos = (self.size[0] * sec_start / self.screen_time) + self.x0 
-        k_height = 2 * self.size[1]/REF_NUMBER_KEYS
-        
+        #key height
+        k_height = self.size[1]/sheet_mappings.N_SPACES
+        #height of each step for the keys positions
+        d_height = self.size[1]/float(sheet_mappings.NATURAL_POS)
+        ##
+        note_accidental = 'natural'
+        note_pos = sheet_mappings.get_note_pos(midi_id, note_accidental)
+
         #center_y = self.size[1] - ( (midi_id - 21) * self.size[1] / REF_NUMBER_KEYS )
         #center_y = self.pos[1] + self.size[1] -( (midi_id - 21) * self.size[1] / REF_NUMBER_KEYS )
-        #TODO warning take out the hardcoded 21
-        center_y =  ( (midi_id - 21) * self.size[1] / REF_NUMBER_KEYS )
-        vpos = center_y - k_height / 2.
+        #TODO Make this take in account midi note accidentals (future when the reading from  midi file supports it too
+        center_y =  note_pos * d_height
+        #2 offset to compensate for the lines
+        #vpos = center_y - d_height
+        #experiment to see dispalay positions on screen
+        vpos = center_y - d_height + (2*d_height)
         ypos = self.size[1] - vpos + self.pos[1]
         pos = (xpos, ypos)
+        #print midi_id, note_pos, k_height, d_height, self.size, center_y, vpos, pos
         return pos

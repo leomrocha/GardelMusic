@@ -16,8 +16,8 @@ N_LINES = 27
 #position of the Central Do note
 C_POS = 24
 #number of positions
-NATURAL_POS = 57 ## == spaces * 2 + 1 counting the zero and max position
-
+#NATURAL_POS = 57 ## == spaces * 2 + 1 counting the zero and max position
+NATURAL_POS = 56 ## == spaces * 2
 
 def _generate_pos(start=21, end=108):
     """
@@ -35,7 +35,7 @@ def _generate_pos(start=21, end=108):
             pos_dict[mid] = (counter, counter, counter)
             counter+=1
         if kc is 'black':
-            pos_dict[mid] = (-1, counter, counter+1)
+            pos_dict[mid] = (-1, counter, counter-1)
     # now generate the positions for the black keys
     #for mid in range(start, end+1):
     #    kc = keyboard_mappings.get_key_color_from_midi(mid)
@@ -46,7 +46,7 @@ def _generate_pos(start=21, end=108):
 NOTE_RANGE = (21,108)
 NOTES_POS = _generate_pos()
 
-print NOTES_POS
+#print NOTES_POS
 
 def get_note_pos(midi_id, accidental="natural"):
     """

@@ -89,8 +89,8 @@ class PlayScene(object):
         self.dirty = True
         
         ###test file names:
-        #fname = "assets/midi/yiruma-river_flows_in_you.mid"
-        fname="assets/midi/mary.mid"
+        fname = "assets/midi/yiruma-river_flows_in_you.mid"
+        #fname="assets/midi/mary.mid"
         #load midi, this is a test, should be done somehow by the parent
         self.load_midi(fname)
         
