@@ -123,7 +123,7 @@ ref_key_size = {
 ref_width = 1060
 ref_height = 120
 
-keyboard_range=(21,95)
+keyboard_range=(21,108)
 
 #current_mappings = {}
 def get_height(width):

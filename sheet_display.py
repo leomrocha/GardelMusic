@@ -37,6 +37,13 @@ from displays import *
 
 #REF_NUMBER_KEYS = 88
 
+#################################################################################
+# I don't know where to put this calculations, so for the moment they go here
+import sheet_mappings
+
+
+#################################################################################
+
 class SheetLayer(object):
     """    
     """
