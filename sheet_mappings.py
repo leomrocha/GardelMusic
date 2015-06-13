@@ -23,7 +23,6 @@ def _generate_pos(start=21, end=108):
     """
     generates the dict containing the positions for midi_ids in the following order:
     is a dict of dicts:
-    WARNING, beginning and end note MUST be WHITE or the algorithm WILL FAIL
     midi_id: ('natural': pos, 'b': pos, '#': pos)
     """
     # first generate the position for the white keys
@@ -31,19 +30,23 @@ def _generate_pos(start=21, end=108):
     pos_dict = {}
     for mid in range(start, end+1):
         kc = keyboard_mappings.get_key_color_from_midi(mid)
-        print 'mid = %d, kc = %s, pos = %d' % (mid, kc, counter)
+        #print 'mid = %d, kc = %s, pos = %d' % (mid, kc, counter)
         if kc is 'white':
             pos_dict[mid] = (counter, counter, counter)
             counter+=1
-    # now generate the positions for the black keys
-    for mid in range(start, end+1):
-        kc = keyboard_mappings.get_key_color_from_midi(mid)
         if kc is 'black':
-            pos_dict[mid] = (-1, pos_dict[mid-1][0], pos_dict[mid+1][0])
+            pos_dict[mid] = (-1, counter, counter+1)
+    # now generate the positions for the black keys
+    #for mid in range(start, end+1):
+    #    kc = keyboard_mappings.get_key_color_from_midi(mid)
+    #    if kc is 'black':
+    #        pos_dict[mid] = (-1, pos_dict[mid-1][0], pos_dict[mid+1][0])
     return pos_dict
     
 NOTE_RANGE = (21,108)
 NOTES_POS = _generate_pos()
+
+print NOTES_POS
 
 def get_note_pos(midi_id, accidental="natural"):
     """
@@ -54,10 +57,10 @@ def get_note_pos(midi_id, accidental="natural"):
     if it is a black note, an accidental MUST be given or it'll assume is a sharp
     """
     #initialization just in case:
-    global NOTE_RANGE
-    global NOTES_POS
-    if NOTES_POS is None:
-        NOTES_POS = _generate_pos()
+    #global NOTE_RANGE
+    #global NOTES_POS
+    #if NOTES_POS is None:
+    #    NOTES_POS = _generate_pos()
     #assert rante, TODO change for a dynamic value
     assert midi_id >= NOTE_RANGE[0]
     assert midi_id <= NOTE_RANGE[1]
