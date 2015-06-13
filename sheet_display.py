@@ -141,7 +141,8 @@ class PlayerSheetDisplay(object):
         left_overlay_size = (self.size[0] * self.LEFT_OVERLAY_PROPORTION ,self.size[1])
         self.left_overlay = pygame.sprite.Sprite()
         self.left_overlay.image = pygame.Surface(left_overlay_size, pygame.HWSURFACE, 32)
-        self.left_overlay.image.set_alpha(128)
+        #self.left_overlay.image.set_alpha(128)
+        self.left_overlay.image.set_alpha(100)
         #self.left_overlay.image.fill((61,61,61))     # fill black
         self.left_overlay.image.fill((51,53,64))     # fill black
         #self.left_overlay.image.fill((250,250,250))     # fill white ->should make a white background behind the keys for the transparency to work well, but black behind it to fill the borders in black
@@ -450,7 +451,8 @@ class PlayerSheetDisplay(object):
         #turn off notes
         for n in self.notes_playing:
             if not pygame.sprite.collide_rect(self.dial, n):
-                n.on_note_off()
+                #n.on_note_off()
+                n.on_note_release()
                 self.notes_playing.remove(n)
         #turn on notes
         for n in notes:
@@ -458,7 +460,8 @@ class PlayerSheetDisplay(object):
                 #TODO add condition to avoid comparing with notes beyond the screen.
                 #print n, n.midi_id
                 if pygame.sprite.collide_rect(self.dial, n):
-                    n.on_note_on()
+                    #n.on_note_on()
+                    n.on_note_press()
                     self.notes_playing.append(n)
                 
 
