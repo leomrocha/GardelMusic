@@ -26,13 +26,39 @@ class HomeScene(Scene):
                                 on_hover_callback=self.on_button_hover,
                                 on_release_callback=self.on_button_release,
                                 size=(250,250), 
-                                pos=(self.w/2 - 125, self.h/2 - 125),
+                                pos=(self.w/2 - 125, self.h/4 - 125),
                                 image_passive=os.path.join("assets","images","icons","ic_play_circle_big_normal_o.png"),
                                 image_hover=os.path.join("assets","images","icons","ic_play_circle_normal_o.png"),
                                 image_active=os.path.join("assets","images","icons","ic_play_circle_pressed_o.png"),
                                 )
+                                
+        self.simon_button = Button(
+                                self.screen, 
+                                on_press_callback=self.on_simon_press,
+                                on_hover_callback=self.on_simon_hover,
+                                on_release_callback=self.on_simon_release,
+                                size=(250,250), 
+                                pos=(self.w/2 - 125, self.h*3/4 - 125),
+                                image_passive=os.path.join("assets","images","icons","ic_light_orange_circle_big_normal_o.png"),
+                                image_hover=os.path.join("assets","images","icons","ic_light_green_circle_big_normal_o.png"),
+                                image_active=os.path.join("assets","images","icons","ic_light_green_circle_big_normal_o.png"),
+                                )
+                                
         self.menu_group.add(self.play_button)
+        self.menu_group.add(self.simon_button)
         self.dirty = True
+
+    def on_simon_press(self):
+        #print "button press called"
+        self.dirty = True
+        
+    def on_simon_hover(self):
+        #print "button hover called"
+        self.dirty = True
+        
+    def on_simon_release(self):
+        #print "button release called"
+        self.director.set_scene("simon")
         
     def on_button_press(self):
         #print "button press called"

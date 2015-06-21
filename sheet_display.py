@@ -133,14 +133,26 @@ class PlayerSheetDisplay(object):
 
     def on_lh_toggle(self, *args):
         """
+        left hand toggle
         """
         self.lh_active = not self.lh_active
+        if not self.lh_active:
+            self.lh_notes_group.empty()
+        else:
+            for n in self.lh_notes:
+                self.lh_notes_group.add(n)
         
     def on_rh_toggle(self, *args):
         """
+        right hand toggle
         """
         self.rh_active = not self.rh_active
-
+        if not self.rh_active:
+            self.rh_notes_group.empty()
+        else:
+            for n in self.rh_notes:
+                self.rh_notes_group.add(n)
+                
     def _set_overlay(self):
         """
         sets overlay shadows for display references

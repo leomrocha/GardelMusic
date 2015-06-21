@@ -42,15 +42,30 @@ class Director:
         #Setup video system with current video settings
         display_info = pygame.display.Info()
         self.scene_width, self.scene_height = display_info.current_w, display_info.current_h
-
+        #TODO create icon and caption
+        #icon_surface = .... TODO load icon
+        #pygame.display.set_icon(icon_surface)
+        #pygame.display.set_caption(title="Music Challenge", icontitle=None)
+        '''
+        Flags:
+        pygame.FULLSCREEN    create a fullscreen display
+        pygame.DOUBLEBUF     recommended for HWSURFACE or OPENGL
+        pygame.HWSURFACE     hardware accelerated, only in FULLSCREEN
+        pygame.OPENGL        create an OpenGL renderable display
+        pygame.RESIZABLE     display window should be sizeable
+        pygame.NOFRAME       display window will have no border or controls
+        
+        pygame.FULLSCREEN | pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.OPENGL | pygame.NOFRAME  #openGL does not work with pygame.display.update([RECT LIST]) and for the moment I don't need that much speed (later maybe)
+        pygame.FULLSCREEN | pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.NOFRAME
+        '''
         #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height))
         self.screen = pygame.display.set_mode((self.scene_width * 8/10, self.scene_height * 8/10))
         #self.screen = pygame.display.set_mode((self.scene_width * 5/10, self.scene_height * 5/10))
         #activate when the game is ready for playing
-        #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height), pygame.FULLSCREEN, 32)
+        #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height), pygame.FULLSCREEN)
 
         #self.screen = pygame.display.set_mode((1600, 900), RESIZABLE)
-        #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height), pygame.RESIZABLE, 32)
+        #self.screen = pygame.display.set_mode((self.scene_width, self.scene_height), pygame.RESIZABLE)
         #self.screen = pygame.display.set_mode((1060, 500))
 
         pygame.display.set_caption("Piano Challenge")
@@ -85,6 +100,7 @@ class Director:
         
         #play scene
         self.scenes["play"] = play_scene.PlayScene(self, self.midi_pubsub)
+        #self.scenes["simon"] = simon_scene.SimonScene(self, self.midi_pubsub)
         #Set start screen
         self.set_scene(self.start_scene)
 
