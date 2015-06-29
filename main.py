@@ -33,8 +33,15 @@ def teardown():
     """
     finishes everything that has to be ended before game exit
     """
+    #print "ending application"
+    #print "quit midi"
     pygame.midi.quit()
+    #print "quit display"
+    #pygame.display.quit()
+    #print "quitting pygame"
     pygame.quit()
+    #print "c'est fini"
+    #print "____"
     
 
 def process_event(event):
@@ -54,5 +61,5 @@ if __name__=="__main__":
     setup()
     main()
     teardown()
-    sys.exit()
+    sys.exit(0)
 

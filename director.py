@@ -123,15 +123,15 @@ class Director:
 
     def loop(self):
         "Pone en funcionamiento el juego."
-
+        #time = self.clock.tick(100)
         while not self.quit_flag:
-            time = self.clock.tick(100)
-            
+            time = self.clock.tick(200)
             
             # EXIT process
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.quit()
+                    return
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
 			            self.quit()
