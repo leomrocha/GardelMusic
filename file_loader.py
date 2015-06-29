@@ -12,6 +12,7 @@ loading a file returns:
 """
 
 import os
+import json
 
 import pygame
 
@@ -95,10 +96,18 @@ class AssociatedEvents(object):
     """
     
     def __init__(self):
+        """
+        """
+        # midi event [note_on, not_off]
         self.data = [None, None]
-    
+        # play_hint  = [hand/foot, "right/left", finger id if needed or None]
+        #TODO this is useful for piano and drums, extend for guitar and other instruments later
+        #TODO hand = h, foot = f, left = l, right = r
+        self.__play_hint = ["hand", "right", 1]
+        
     def get_note_on(self):
         return self.data[0]
+        
     def set_note_on(self, event):
         if not is_note_on(event):
             raise ValueError('Not a valid NoteOnEvent')
@@ -108,21 +117,40 @@ class AssociatedEvents(object):
 
     def get_note_off(self):
         return self.data[1]
+        
     def set_note_off(self, event):
         #validate
         if self.data[0] is None:
             raise ValueError("NoteOnEvent not set, can't set NoteOffEvent")
         elif not is_note_off(event):
-            raise ValueError('Not a valid NoteOffEvent: %s' % str(event))
+            raise ValueError('Event Error; Not a valid NoteOffEvent: %s' % str(event))
         elif event.tick < self.data[0].tick:
-            raise ValueError('Not a valid tick time for NoteOffEvent (tick < NoteOnEvent.tick')
+            raise ValueError('Tick Error; Not a valid tick time for NoteOffEvent (tick < NoteOnEvent.tick')
         elif event.pitch < self.data[0].pitch:
-            raise ValueError('NoteOfEvent.pitch is NOT the same as NoteOnEvent.pitch')
+            raise ValueError('Pitch Error; NoteOfEvent.pitch is NOT the same as NoteOnEvent.pitch')
         #validation completed, now save the event
+        elif event.channel != self.data[0].channel:
+            raise ValueError('Channel Error; NoteOfEvent.channel is NOT the same as NoteOnEvent.channel')
         self.data[1] = event
-        
 
     note_off = property(get_note_off, set_note_off)
+
+    def set_hint(self, hint):
+        """
+        hint = (hand/foot, right/left, finger id) # 3 item iterable
+        if one of the values is None, that value will NOT be set. Only non None values will be set
+        """
+        for i in range(3):
+            if hint[i] is not None:
+                #TODO verify value is valid
+                self.__play_hint[i] = hint[i]
+
+    def get_hint(self):
+        """
+        """
+        return self.__play_hint
+
+    play_hint = property(get_hint, set_hint)
 
     def is_complete(self):
         """
@@ -165,6 +193,279 @@ class AssociatedEvents(object):
             return self.data[1].tick
         return -1
 
+    def to_dict(self):
+        """
+        Returns the information of the object in a dict (for serialization to json for example)
+        """
+        ret = { ## TODO note_on = on; note_off = off; hint = ??
+              "note_on": { ## tick = t; pitch = p; velocity = v
+                        "tick": self.data[0].tick,
+                        #"channel": self.data[0].channel,
+                        "pitch": self.data[0].pitch,
+                        "velocity": self.data[0].velocity
+                    },
+              
+              "note_off": {
+                        "tick": self.data[1].tick,
+                        #"channel": self.data[0].channel,
+                        "pitch": self.data[1].pitch,
+                        "velocity": self.data[1].velocity
+                    },
+              #channel should be the same for both, note_on and note_off
+              "channel": self.data[0].channel,
+              #"duration"
+              "hint": self.__play_hint
+        }
+        
+        return ret
+
+    @classmethod
+    def from_dict(cls, event_dict):
+        """
+        Create an instance from a dict containing the information
+        """        
+        ret = cls()
+        note_on = midi.events.NoteOnEvent()
+        note_on.tick = event_dict["note_on"]["tick"]
+        note_on.pitch = event_dict["note_on"]["pitch"]
+        note_on.velocity = event_dict["note_on"]["velocity"]
+        note_on.channel = event_dict["channel"]
+
+        note_off = midi.events.NoteOnEvent()
+        note_off.tick = event_dict["note_off"]["tick"]
+        note_off.pitch = event_dict["note_off"]["pitch"]
+        note_off.velocity = event_dict["note_off"]["velocity"]
+        note_off.channel = event_dict["channel"]
+        
+        
+        ret.note_on = note_on
+        ret.note_off = note_off
+        ret.hint = event_dict["note_off"]["hint"]
+        return ret
+
+    @classmethod
+    def from_JSON_string(cls, json_string):
+        """
+        Load
+        """
+        data_dict = json.loads(json_string)
+        ret = AssociatedEvents.from_dict(data_dict)
+        return ret
+
+    @classmethod
+    def from_JSON_file(cls, fpath):
+        """
+        Load
+        """
+        data_dict = json.loads(fpath)
+        ret = cls.from_dict(data_dict)
+        return ret
+
+    def to_JSON(self):
+        """
+        returns JSON string representing this object
+        """
+        return json.dumps(self.to_dict())
+
+
+class TrackMetaInfo(object):
+    """
+    Meta Information about a track
+    """
+    #TODO 
+    pass
+
+
+class TrackInfo(object):
+    """
+    Information about a track
+    Meta information about the track
+    the track itself is an ordered list of AssociatedEvents, ordered by note_on time
+    """
+    
+    def __init__(self):
+        """
+        """
+        #TODO implement this as a sorted list or a btree or some tree that keeps things in inorder
+        self._events = []
+        #self._meta = MetaInfo()
+        
+    def __sort(self):
+        """
+        Sorts the AssociatedEvents by 
+        """
+        self._events.sort(key=lambda x: x.get_init_tick())
+        
+    def add_event(self, event):
+        """
+        Adds an AssociatedEvent to the given
+        """
+        self._events.append(event)
+        self.__sort()
+    
+    def add_events(self, events):
+        """
+        Adds an AssociatedEvent list to the current track
+        """
+        if type(a) is list:
+            self._events.extend(events)
+        else:
+            #asume iterable
+            for e in events:
+                self._events.append(e)
+        #sort the events
+        self.__sort()
+        #TODO make this more efficient, but for the moment, it doesn't matter
+        
+    def set_meta(self, meta):
+        """
+        sets the meta information about the track
+        """
+        #TODO 
+        pass
+        
+    def to_dict(self):
+        """
+        """
+        ret = {
+            "events": [e.to_dict() for e in self._events],
+            #TODO track meta info ... future when needed
+            #"meta": self._meta.to_dict()
+        }
+        return ret
+
+    @classmethod
+    def from_dict(cls, event_dict):
+        """
+        Create an instance from a dict containing the information
+        """        
+        ret = cls()
+        #TODO
+        events = [AssociatedEvent.from_dict(e) for e in event_dict["events"]]
+        ret.add_events(events)
+        return ret
+
+    @classmethod
+    def from_JSON_string(cls, json_string):
+        """
+        Load
+        """
+        data_dict = json.loads(json_string)
+        ret = cls.from_dict(data_dict)
+        return ret
+
+    @classmethod
+    def from_JSON_file(cls, fpath):
+        """
+        Load
+        """
+        data_dict = json.loads(fpath)
+        ret = cls.from_dict(data_dict)
+        return ret
+
+    def to_JSON(self):
+        """
+        returns JSON string representing this object
+        """
+        return json.dumps(self.to_dict())
+
+
+class SongInfo(object):
+    """
+    Represents a musical piece or song
+    contains a list of tracks, each track contains a certain information
+    Tracks can be separated by
+    """
+    def __init__(self):
+        """
+        """
+        #self._meta = {} # passed to property
+        self._tracks = []
+        
+    def add_track(self, track, pos=None):
+        """
+        """
+        if pos is None:
+            pos = len(self._tracks)
+        self._tracks.append(pos, track)
+
+    def add_tracks(self, tracks):
+        """
+        """
+        self._tracks.extend(tracks)
+
+    def add_track(self, track):
+        """
+        """
+        #TODO verify type
+        self._tracks.append(track)
+
+    def set_meta(self, meta):
+        """
+        """
+        self._meta = meta
+    
+    def get_meta(self):
+        """
+        """
+        return self._meta
+
+    meta = property(set_meta, get_meta)
+    
+    def to_dict(self):
+        """
+        """
+        ret = {
+            "meta" : self._meta,
+            "tracks": [t.to_dict() for t in self._tracks]
+        }
+
+    @classmethod
+    def from_dict(cls, song_dict):
+        """
+        Create an instance from a dict containing the information
+        """        
+        ret = cls()
+        tracks = [TrackInfo.from_dict(t) for t in song_dict["tracks"]]
+        meta = song_dict["meta"]
+        ret.add_tracks(tracks)
+        ret.meta = meta
+        return ret
+
+    @classmethod
+    def from_JSON_string(cls, json_string):
+        """
+        Load
+        """
+        data_dict = json.loads(json_string)
+        ret = cls.from_dict(data_dict)
+        return ret
+
+    @classmethod
+    def from_JSON_file(cls, fpath):
+        """
+        Load
+        """
+        data_dict = json.loads(fpath)
+        ret = cls.from_dict(data_dict)
+        return ret
+
+    def to_JSON(self):
+        """
+        returns JSON string representing this object
+        """
+        return json.dumps(self.to_dict())
+
+
+
+class LevelInfo(object):
+    """
+    Contains the Song and details about the levels that that particular song contains
+    """
+    
+    #TODO
+    pass
+
 
 class MidiInfo(object):
     """
@@ -175,7 +476,14 @@ class MidiInfo(object):
        - the events are ordered by time|tick
        - the tick time is absolute
 
+    for practical purposes:
+        - track 0 is considered right hand
+        - track 1 is considered left hand
+    
     """
+    #TODO REFACTOR this object is quite AWFUL, it started as a test and now is something bigger
+    #TODO REFACTOR to make it better
+    
     def __init__(self, fname):
         """
         fname: the file path to read
@@ -285,6 +593,41 @@ class MidiInfo(object):
             
         return associations
 
+    def to_song(self):
+        """
+        Returns a SongInfo object with the information in the current object
+        """
+        #TODO 
+        song = SongInfo()
+        song.meta = self.info_dict
+        for i in range(len(self.tracks)):
+            #assume track number: :0 = right hand; 1 = left hand; 2 = right foot; 3 = left foot
+            #assume finger number = 1
+            hint = ["right","hand",1]
+            if i == 1:
+                hint = ["left","hand",1]
+            elif i == 2:
+                hint = ["right","foot",1]
+            elif i == 3:
+                hint = ["left","foot",1]
+            track = TrackInfo()            
+            #set the hints by default as they come from midi file tracks
+            for ae in self.tracks[i]:
+                ae.play_hint = hint
+            track.add_events(self.tracks[i])
+            song.append(track)
+
+        return song
+
+def load_midi2song(fpath):
+    """
+    Loads a MIDI file into a SongInfo object
+    """
+    midi_info = MidiInfo(fpath)
+    song = midi_info.to_song()
+    return song
+    
+        
 #####
 #midi file writer
 #####

@@ -32,26 +32,45 @@ All level files are preferably in their own folder, and even better, compressed,
 
 Meta file will be automatically created from  midi file if the .meta file does not exists
 
-The .meta file format (based on the synthesia file format for compatibility):
-    Title : string
-    Subtitle : string
-    Rating : integer [0-100]
-    Difficulty : integer [0-100]
-    BackgroundImage : string (relative path from this metadata file to an image)
-    ButtonPassive : string (relative path from this metadata file to an image ) - image on button pressed, for the button selection of the level
-    ButtonHover : string (relative path from this metadata file to an image ) - image on button pressed, for the button selection of the level
-    ButtonActive : string (relative path from this metadata file to an image ) - image on button pressed, for the button selection of the level
-    Icon: (relative path from this metadata file to an image) - icon to show 
-    Composer : string
-    Arranger : string
-    Copyright : string
-    License : string
-    MadeFamousBy : string
-    FingerHints : string
-    HandParts : string
-    Tags : list of free-form string descriptor tags.
-    Bookmarks : list of pairs: ( an integer (1 or greater) measure number, optionally followed free-form string description.)
-    
+The .meta file format will be a JSON serialized the following ideas are a guideline
+{
+    meta:{
+        Title : string
+        Subtitle : string
+        Rating : integer [0-100]
+        Difficulty : integer [0-100]
+        BackgroundImage : string (relative path from this metadata file to an image)
+        ButtonPassive : string (relative path from this metadata file to an image ) - image on button pressed, for the button selection of the level
+        ButtonHover : string (relative path from this metadata file to an image ) - image on button pressed, for the button selection of the level
+        ButtonActive : string (relative path from this metadata file to an image ) - image on button pressed, for the button selection of the level
+        Icon: (relative path from this metadata file to an image) - icon to show 
+        Composer : string
+        Arranger : string
+        Interpreter: string
+        Copyright : string
+        License : string
+        ##MadeFamousBy : string
+        ##FingerHints : string
+        ##HandParts : string
+        Tags : list of free-form string descriptor tags.
+        ##Bookmarks : list of pairs: ( an integer (1 or greater) measure number, optionally followed free-form string description.)
+        key: string ## G, F, etc
+        BPM: integer
+        difficulties: [int, ...] # list of difficulties to play the level from really slow to fast in percentage of the original BMP
+    },
+    ##a song is cuted in parts, each part will belong to a 
+    parts:{
+        1:
+    },
+    # hints refer to the hand and finger as well as other meta-information
+    hints:{
+        channel_0 : [
+                {tick: 1111 sec: 4444, hint:(hand, finger[1...5])},
+        ],
+        channel_1 : [
+        
+        ]
+    }
 
 TODO think this more ......
 

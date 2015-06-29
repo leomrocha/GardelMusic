@@ -32,11 +32,11 @@ class HomeScene(Scene):
                                 image_active=os.path.join("assets","images","icons","ic_play_circle_pressed_o.png"),
                                 )
                                 
-        self.simon_button = Button(
+        self.follow_button = Button(
                                 self.screen, 
-                                on_press_callback=self.on_simon_press,
-                                on_hover_callback=self.on_simon_hover,
-                                on_release_callback=self.on_simon_release,
+                                on_press_callback=self.on_follow_press,
+                                on_hover_callback=self.on_follow_hover,
+                                on_release_callback=self.on_follow_release,
                                 size=(250,250), 
                                 pos=(self.w/2 - 125, self.h*3/4 - 125),
                                 image_passive=os.path.join("assets","images","icons","ic_light_orange_circle_big_normal_o.png"),
@@ -45,20 +45,20 @@ class HomeScene(Scene):
                                 )
                                 
         self.menu_group.add(self.play_button)
-        self.menu_group.add(self.simon_button)
+        self.menu_group.add(self.follow_button)
         self.dirty = True
 
-    def on_simon_press(self):
-        #print "button press called"
+    def on_follow_press(self):
+        #print "button press follow called"
         self.dirty = True
         
-    def on_simon_hover(self):
-        #print "button hover called"
+    def on_follow_hover(self):
+        #print "button hover follow called"
         self.dirty = True
         
-    def on_simon_release(self):
-        #print "button release called"
-        self.director.set_scene("simon")
+    def on_follow_release(self):
+        #print "button release follow called"
+        self.director.set_scene("follow")
         
     def on_button_press(self):
         #print "button press called"
@@ -86,6 +86,7 @@ class HomeScene(Scene):
         """
         """
         self.play_button.on_event(event)
+        self.follow_button.on_event(event)
         
 
     def on_draw(self, screen=None):

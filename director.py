@@ -14,6 +14,7 @@ import sys
 #import all the scenes
 import home_scene
 import play_scene
+import follow_scene
 ######MIDI
 
 from  midi_connection import MIDIPubSub
@@ -100,7 +101,7 @@ class Director:
         
         #play scene
         self.scenes["play"] = play_scene.PlayScene(self, self.midi_pubsub)
-        #self.scenes["simon"] = simon_scene.SimonScene(self, self.midi_pubsub)
+        self.scenes["follow"] = follow_scene.FollowScene(self, self.midi_pubsub)
         #Set start screen
         self.set_scene(self.start_scene)
 
@@ -169,7 +170,7 @@ class Director:
         sets the new scene to the given name
         """
         if scene_name in self.scenes:
-            #print scene_name, self.scenes[scene_name]
+            print scene_name, self.scenes[scene_name]
             self._set_scene(self.scenes[scene_name])
         else:
             ##TODO make a log here
