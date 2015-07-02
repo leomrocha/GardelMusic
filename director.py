@@ -122,10 +122,13 @@ class Director:
         self.screen.blit(self.fps_txt, (10, 10))
 
     def loop(self):
-        "Pone en funcionamiento el juego."
+        """
+        Game loop
+        """
         #time = self.clock.tick(100)
         while not self.quit_flag:
-            time = self.clock.tick(200)
+            #time = self.clock.tick(200)
+            time = self.clock.tick(100)
             
             # EXIT process
             for event in pygame.event.get():

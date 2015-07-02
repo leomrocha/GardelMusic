@@ -457,14 +457,131 @@ class SongInfo(object):
         return json.dumps(self.to_dict())
 
 
+class DrillSetInfo(object):
+    """
+    Contains the information for a single drill set of the song
+    A drill set will be used to generate the following drills:
+        - rithm drill
+        - auditive memory drill
+        - reading drill
+    """
 
-class LevelInfo(object):
+    def __init__(self, name, content, dependencies)
+        """
+        """
+        #intrinsec values, the ones that give identity to this drill set
+        self._name = name
+        self._content = content
+        self._dependencies = dependencies
+        self._deps_ids = [d.name for d in dependencies]
+
+    def to_dict(self):
+        """
+        """
+        return {'name':self._name, 'content':self._content, 'deps':self._dependencies.to_dict()} #TODO fix this, will break if deps are not objects ...
+
+    def to_JSON(self):
+        """
+        """
+        return json.dumps(self.to_dict())
+
+
+class PartitionedSongInfo(object):
     """
-    Contains the Song and details about the levels that that particular song contains
+    Contains the Song and details about the partitions that'll form the levels
+    A song can be partitioned in different sections/paragraphs, 
+    these paragraphs contain different information (keys, tempo, and so on, TODO not implemented in this first version)
+    The partitions form a Tree, this tree contains information on how logically the creator of this partition
+    thinks is better. This tree goes from simple elements on the song to the complete song
+    An automated partitioner is provided, this will partition the song with the given parameters
+    Partitioner available:
+     - per measure (given the BPM data), will partition per measure and then will start joining contiguous measures
+     
     """
-    
+    def __init__(self):
+        """
+        """
+        self._song = None
+        self._partitions = []
+
+    @staticmethod
+    def tree_trasversal(tree):
+        """
+        ???
+        """
+        #TODO
+        pass
+        
+    @staticmethod
+    def tree_reversal(tree):
+        """
+        Returns the reversed tree, ... TODO
+        """
+        #TODO
+        pass
+        
+    @staticmethod
+    def flatten_tree(object):
+        """
+        Flattens a tree giving back an array, the dependencies are changed for names instead of direct object
+        
+        """
+        #TODO
+        pass
+
+    @staticmethod
+    def array_to_tree(arr):
+        """
+        Recursive tree generation, this is a simple case for level generation
+        The tree nodes are DrillSetInfo nodes
+        ##the tree has nodes with structure: {'name':[first_node, last_node] | node, 'content':arr, 'deps':[LIST OF DEPS]}
+        """
+        l = len(arr)
+        if l<=1:
+            return DrillSetInfo(name=arr, content=arr, dependencies = ())
+        drill = DrillSetInfo(name=[arr[0], arr[l-1]], content=arr, dependencies = (part(arr[:l/2]),part(arr[l/2:])))
+        return drill
+
+
+    @staticmethod
+    def array_to_dict_tree(arr):
+        """
+        Recursive tree generation, this is a simple case for level generation
+        the tree has nodes with structure: {'name':[first_node, last_node] | node, 'content':arr, 'deps':[LIST OF DEPS]}
+        """
+        l = len(arr)
+        if l<=1:
+            return {'name':arr, 'content':arr, 'deps':()}
+        drill = {'name':[arr[0], arr[l-1]], 'content':arr, 'deps':(part(arr[:l/2]),part(arr[l/2:]))}
+        return drill
+
     #TODO
-    pass
+    @classmethod
+    def measure_partition(cls, song_info):
+        """
+        """
+        #TODO this measure partition DOES NOT consider that the tempo can change
+        #also, multiple tempos for right and left hand might not be well handled ... I don't know about this
+        #get song duration
+        #get BPM
+        #get starting point of first note (this might prove tricky for starting on anacruse notes
+        #get tempo signature to know how many beats per measure we'll have
+        #generate an array of begin measures times, count the number of measures
+        #
+        #Generate dependency tree (array_to_tree ...)?
+        #Joining:
+        #   should be arecursive thing that creates the tree
+        #   for p in partitions[:-1]:
+        #       np = join p, p.next
+        #TODO
+        pass
+        
+    #@classmethod
+    #def notes_partition(cls, song_info)
+    #    """
+    #    """
+    #    #TODO
+    #    pass
 
 
 class MidiInfo(object):
@@ -618,6 +735,7 @@ class MidiInfo(object):
             song.append(track)
 
         return song
+
 
 def load_midi2song(fpath):
     """
