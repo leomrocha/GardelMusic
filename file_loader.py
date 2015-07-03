@@ -496,7 +496,7 @@ class DrillSetInfo(object):
         self._name = name
         self._content = content
         self._dependencies = dependencies
-        self._deps_ids = [d.name for d in dependencies]
+        self._deps_ids = [d._name for d in dependencies]
         #reference to tempo and song information
         #ticks list containing the ticks for each mesure
         #self.measure_ticks = measure_ticks
@@ -508,9 +508,13 @@ class DrillSetInfo(object):
     def to_dict(self):
         """
         Note nor tempo nor song information are serialized.
+        This serializes only this drill and DOES NOT serialize recursive
         This is because if so, it'll duplicate data that in reality accompanies a list of drills (or a tree)
         """
-        return {'name':self._name, 'content':self._content, 'deps':self._dependencies.to_dict()} #TODO fix this, will break if deps are not objects ...
+        #return {'name':self._name, 'content':self._content, 'deps':self._dependencies.to_dict()} #TODO fix this, will break if deps are not objects ...
+        #return {'name':self._name, 'content':self._content, 'deps':[d.to_dict() for d in self._dependencies]} #this does not work either
+        #return {'name':self._name, 'content':self._content, 'deps':[d.to_dict() for d in self._dependencies]} #this does not work either
+        return {'name':self._name, 'content':self._content, 'deps':self._deps_ids} #this works but does not go recursive
 
     def from_dict(self, data_dict):
         """
@@ -589,7 +593,9 @@ class PartitionedSongInfo(object):
             #return DrillSetInfo(name=arr, content=arr, dependencies = (), measure_ticks, metronome_ticks, song_info)
             return DrillSetInfo(name=arr, content=arr, dependencies = ())
         #drill = DrillSetInfo(name=[arr[0], arr[l-1]], content=arr, dependencies = (part(arr[:l/2]),part(arr[l/2:])), measure_ticks, metronome_ticks, song_info)
-        drill = DrillSetInfo(name=[arr[0], arr[l-1]], content=arr, dependencies = (part(arr[:l/2]),part(arr[l/2:])))
+        drill = DrillSetInfo(name=[arr[0], arr[l-1]], content=arr, 
+                    dependencies = (PartitionedSongInfo.array_to_tree(arr[:l/2]),
+                                        PartitionedSongInfo.array_to_tree(arr[l/2:])))
         return drill
 
     @staticmethod
@@ -601,7 +607,9 @@ class PartitionedSongInfo(object):
         l = len(arr)
         if l<=1:
             return {'name':arr, 'content':arr, 'deps':()}
-        drill = {'name':[arr[0], arr[l-1]], 'content':arr, 'deps':(part(arr[:l/2]),part(arr[l/2:]))}
+        drill = {'name':[arr[0], arr[l-1]], 'content':arr, 
+                                            'deps':(PartitionedSongInfo.array_to_dict_tree(arr[:l/2]),
+                                                    PartitionedSongInfo.array_to_dict_tree(arr[l/2:]))}
         return drill
 
     @staticmethod
@@ -639,10 +647,9 @@ class PartitionedSongInfo(object):
         #get song duration, starting note and end note. start_tick is always 0 begin_tick is the tick of start of the first note played
         begin_tick, end_tick = PartitionedSongInfo.get_song_duration(song_info)
         #get BPM
-        print "meta"
-        print song_info.meta
-        
-        bpm = song_info.meta['tempo'].bpm
+        #print "meta"
+        #print song_info.meta
+        #bpm = song_info.meta['tempo'].bpm
 
         #get tempo signature to know how many beats per measure we'll have
         time_signature = song_info.meta['time_signature']
@@ -651,7 +658,7 @@ class PartitionedSongInfo(object):
         den = time_signature.denominator
         tpm = ticksPerMeasure(num, den, ppq)
         #generate the metronome beat array 
-        metronome_ticks = range(0, end+1, tpm)
+        metronome_ticks = range(0, end_tick+1, tpm)
         #generate the measure marks
         measure_ticks = metronome_ticks[::num]
         #measure ids
