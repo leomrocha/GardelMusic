@@ -33,7 +33,8 @@ def ticks2musec(ticks, BPM, resolution):
     #muspt = muspb / resolution
     #return muspt * ticks .
     return ticks * 60000000. / (BPM * resolution)
-    
+
+
 def ticks2ms(ticks, BPM, resolution):
     """
     milliseconds
@@ -54,7 +55,15 @@ def ticks2sec(ticks, BPM, resolution):
     #return ticks2ms(ticks, BPM, resolution) / 1000. ## ===
     #return (60. / BPM)/resolution ## ===
     return  ticks * 60. / (BPM * resolution)
-    
+
+
+def ticksPerMeasure(numerator, denominator, resolution):
+    """
+    Ticks in a measure
+    """
+    #TODO find out if there is the need to calculate it better, I don't trust my calculations yet ... :/
+    #return (numerator * resolution)  / (4/denominator)
+    return numerator * resolution
     
 
 ################################################################################
@@ -80,6 +89,7 @@ def is_note_on(event):
     """
     ret = isinstance(event, midi.NoteOnEvent)
     return ret
+
 
 def is_note_off(event):
     """
@@ -307,7 +317,7 @@ class TrackInfo(object):
         """
         Adds an AssociatedEvent list to the current track
         """
-        if type(a) is list:
+        if type(events) is list:
             self._events.extend(events)
         else:
             #asume iterable
@@ -316,6 +326,11 @@ class TrackInfo(object):
         #sort the events
         self.__sort()
         #TODO make this more efficient, but for the moment, it doesn't matter
+        
+    def get_events(self):
+        """
+        """
+        return self._events
         
     def set_meta(self, meta):
         """
@@ -379,7 +394,7 @@ class SongInfo(object):
     def __init__(self):
         """
         """
-        #self._meta = {} # passed to property
+        self._meta = {} 
         self._tracks = []
         
     def add_track(self, track, pos=None):
@@ -400,9 +415,15 @@ class SongInfo(object):
         #TODO verify type
         self._tracks.append(track)
 
+    def get_tracks(self):
+        """
+        """
+        return self._tracks
+
     def set_meta(self, meta):
         """
         """
+        #TODO make some more things test and verify data, etc
         self._meta = meta
     
     def get_meta(self):
@@ -410,15 +431,16 @@ class SongInfo(object):
         """
         return self._meta
 
-    meta = property(set_meta, get_meta)
+    meta = property(get_meta, set_meta)
     
     def to_dict(self):
         """
         """
         ret = {
-            "meta" : self._meta,
+            "meta" : self._meta, #WARNING, this with midi events might not work ... see how to fix this
             "tracks": [t.to_dict() for t in self._tracks]
         }
+        return ret
 
     @classmethod
     def from_dict(cls, song_dict):
@@ -427,7 +449,7 @@ class SongInfo(object):
         """        
         ret = cls()
         tracks = [TrackInfo.from_dict(t) for t in song_dict["tracks"]]
-        meta = song_dict["meta"]
+        meta = song_dict["meta"] #WARNING this will not work correctly
         ret.add_tracks(tracks)
         ret.meta = meta
         return ret
@@ -466,7 +488,8 @@ class DrillSetInfo(object):
         - reading drill
     """
 
-    def __init__(self, name, content, dependencies)
+    #def __init__(self, name, content, dependencies, measure_ticks=None, metronome_ticks=None, song_info=None)
+    def __init__(self, name, content, dependencies):
         """
         """
         #intrinsec values, the ones that give identity to this drill set
@@ -474,17 +497,39 @@ class DrillSetInfo(object):
         self._content = content
         self._dependencies = dependencies
         self._deps_ids = [d.name for d in dependencies]
+        #reference to tempo and song information
+        #ticks list containing the ticks for each mesure
+        #self.measure_ticks = measure_ticks
+        #ticks for the metronome
+        #self.metronome_ticks = metronome_ticks
+        #song information (all the notes and hints
+        #self._song_info = song_info
 
     def to_dict(self):
         """
+        Note nor tempo nor song information are serialized.
+        This is because if so, it'll duplicate data that in reality accompanies a list of drills (or a tree)
         """
         return {'name':self._name, 'content':self._content, 'deps':self._dependencies.to_dict()} #TODO fix this, will break if deps are not objects ...
 
+    def from_dict(self, data_dict):
+        """
+        """
+        #TODO validte that all the data is correct!!
+        self._name = data_dict['name']
+        self._content = data_dict['content']
+        self._deps_ids = data_dict['deps']
+        #self._dependencies = data_dict['...']
+        
     def to_JSON(self):
         """
         """
         return json.dumps(self.to_dict())
 
+    def from_JSON(self, json_str):
+        """
+        """
+        return from_dict(json.loads(json_str))
 
 class PartitionedSongInfo(object):
     """
@@ -503,6 +548,8 @@ class PartitionedSongInfo(object):
         """
         self._song = None
         self._partitions = []
+        self._measure_ticks = []
+        self._metronome_ticks = []
 
     @staticmethod
     def tree_trasversal(tree):
@@ -530,6 +577,7 @@ class PartitionedSongInfo(object):
         pass
 
     @staticmethod
+    #def array_to_tree(arr, measure_ticks, metronome_ticks, song_info):
     def array_to_tree(arr):
         """
         Recursive tree generation, this is a simple case for level generation
@@ -538,10 +586,11 @@ class PartitionedSongInfo(object):
         """
         l = len(arr)
         if l<=1:
+            #return DrillSetInfo(name=arr, content=arr, dependencies = (), measure_ticks, metronome_ticks, song_info)
             return DrillSetInfo(name=arr, content=arr, dependencies = ())
+        #drill = DrillSetInfo(name=[arr[0], arr[l-1]], content=arr, dependencies = (part(arr[:l/2]),part(arr[l/2:])), measure_ticks, metronome_ticks, song_info)
         drill = DrillSetInfo(name=[arr[0], arr[l-1]], content=arr, dependencies = (part(arr[:l/2]),part(arr[l/2:])))
         return drill
-
 
     @staticmethod
     def array_to_dict_tree(arr):
@@ -555,6 +604,30 @@ class PartitionedSongInfo(object):
         drill = {'name':[arr[0], arr[l-1]], 'content':arr, 'deps':(part(arr[:l/2]),part(arr[l/2:]))}
         return drill
 
+    @staticmethod
+    def get_song_duration(song_info):
+        """
+        Calculates the duration of the song in ticks and time
+        returns ticks_begin, ticks_end
+        """
+        #TODO make this algorithm more efficient, for the moment it takes linear time and this is NOT good
+        #This is the WORST possible algorithm for douing this, but the problem is that the last note to start might not be the last to end
+        #start is always zero
+        #start = 0
+        #begin is the beginning of the first note
+        begin = 0
+        #end is the end of the last note
+        end = 0
+        for t in song_info.get_tracks():
+            for e in t.get_events():
+                tk = e.note_on.tick
+                if tk < begin:
+                    begin = tk
+                tk = e.note_off.tick
+                if tk > end:
+                    end = tk
+        return (begin, end)
+        
     #TODO
     @classmethod
     def measure_partition(cls, song_info):
@@ -562,19 +635,38 @@ class PartitionedSongInfo(object):
         """
         #TODO this measure partition DOES NOT consider that the tempo can change
         #also, multiple tempos for right and left hand might not be well handled ... I don't know about this
-        #get song duration
+        start_tick = 0
+        #get song duration, starting note and end note. start_tick is always 0 begin_tick is the tick of start of the first note played
+        begin_tick, end_tick = PartitionedSongInfo.get_song_duration(song_info)
         #get BPM
-        #get starting point of first note (this might prove tricky for starting on anacruse notes
+        print "meta"
+        print song_info.meta
+        
+        bpm = song_info.meta['tempo'].bpm
+
         #get tempo signature to know how many beats per measure we'll have
-        #generate an array of begin measures times, count the number of measures
-        #
+        time_signature = song_info.meta['time_signature']
+        ppq = song_info.meta['resolution'] # ticks per quarter note
+        num = time_signature.numerator
+        den = time_signature.denominator
+        tpm = ticksPerMeasure(num, den, ppq)
+        #generate the metronome beat array 
+        metronome_ticks = range(0, end+1, tpm)
+        #generate the measure marks
+        measure_ticks = metronome_ticks[::num]
+        #measure ids
+        measure_ids = range(len(measure_ticks))
         #Generate dependency tree (array_to_tree ...)?
-        #Joining:
-        #   should be arecursive thing that creates the tree
-        #   for p in partitions[:-1]:
-        #       np = join p, p.next
-        #TODO
-        pass
+        #partitions = PartitionedSongInfo.array_to_tree(measure_ids, measure_ticks, metronome_ticks, song_info)
+        partitions = PartitionedSongInfo.array_to_tree(measure_ids)
+        
+        ret = cls()
+        ret._song_info = song_info
+        ret._partitions = partitions
+        ret._metronome_ticks = metronome_ticks
+        ret._measure_ticks = measure_ticks
+        
+        return ret
         
     #@classmethod
     #def notes_partition(cls, song_info)
@@ -608,6 +700,8 @@ class MidiInfo(object):
         self.pattern = midi.read_midifile(fname)
         #TODO check that the pattern is valid
         self.info_dict = self.extract_meta(self.pattern[0])
+        self.info_dict["resolution"] = self.get_resolution()
+        
         self.tracks = []
         #make the track analysis
         self.pattern.make_ticks_abs()
@@ -732,7 +826,7 @@ class MidiInfo(object):
             for ae in self.tracks[i]:
                 ae.play_hint = hint
             track.add_events(self.tracks[i])
-            song.append(track)
+            song.add_track(track)
 
         return song
 
@@ -744,8 +838,18 @@ def load_midi2song(fpath):
     midi_info = MidiInfo(fpath)
     song = midi_info.to_song()
     return song
-    
-        
+
+
+def load_midi2partition(fpath):
+    """
+    Loads a MIDI file into a song and creates the partition automatically (measure partition method)
+    """
+    midi_info = MidiInfo(fpath)
+    song = midi_info.to_song()
+    partition = PartitionedSongInfo.measure_partition(song)
+    return partition
+
+
 #####
 #midi file writer
 #####
