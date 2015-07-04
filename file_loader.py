@@ -384,6 +384,139 @@ class TrackInfo(object):
         """
         return json.dumps(self.to_dict())
 
+class SongMetaInfo(object):
+    """
+    Represent the meta information of a song as for example key signature, tempo, time signature, etc
+    """
+    def __init__(self):
+        """
+        """
+        self._tempo = midi.SetTempoEvent()
+        self._time_signature = midi.TimeSignatureEvent()
+        self._key_signature = midi.KeySignatureEvent()
+        self._smpte_offset = midi.SmpteOffsetEvent()
+        self._instrument = midi.InstrumentNameEvent()
+        self._extra = []
+        #
+        self._resolution = 220
+        #set some defaults
+        self._tempo.bpm = 60 #(default)
+
+    def get_tempo(self):
+        """
+        """
+        return self._tempo
+
+    def set_tempo(self, tempo):
+        """
+        """
+        self._tempo = tempo
+
+    time_signature = property(get_tempo,set_tempo)
+
+    def get_time_signature(self):
+        """
+        """
+        return self._time_signature
+
+    def set_time_signature(self, time_signature):
+        """
+        """
+        self._time_signature = time_signature
+
+    time_signature = property(get_time_signature,set_time_signature)
+    
+    def get_key_signature(self):
+        """
+        """
+        return self._key_signature
+
+    def set_key_signature(self, key_signature):
+        """
+        """
+        self._key_signature = key_signature
+
+    key_signature = property(get_key_signature,set_key_signature)
+
+
+    def get_resolution(self):
+        """
+        """
+        return self._resolution
+        
+    def set_resolution(self, resolution):
+        """
+        """
+        #TODO verify resolution
+        self._resolution = resolution
+        
+    resolution = property(get_resolution, set_resolution)
+        
+
+    @classmethod
+    def from_MIDI_track(cls, meta_track):
+        """
+        Extracts the meta information from a midi track
+        """
+        
+        info = cls()
+        for e in meta_track:
+            if isinstance(e, midi.TimeSignatureEvent):
+                info._time_signature = e
+            elif isinstance(e, midi.KeySignatureEvent):
+                info._key_signature = e
+            elif isinstance(e, midi.SetTempoEvent):
+                info._tempo = e
+            elif isinstance(e, midi.SmpteOffsetEvent):
+                info._smpte_offset = e
+            elif isinstance(e, midi.InstrumentNameEvent):
+                info._instrument = e
+            else:
+                info._extra.append(e)
+        return info
+
+    def to_dict(self):
+        """
+        """
+        ret = {
+            
+            "tempo": (self._tempo.tick, self._tempo.data),
+            "time_signature": (self._time_signature.tick, self._time_signature.data),
+            "key_signature": (self._key_signature.tick, self._key_signature.data),
+            "smpte_offset": (self._smpte_offset.tick,self._smpte_offset.data),
+            "instrument": (self._instrument.tick, self._instrument.text, self._instrument.data),
+            #"extra" :  [str(e) for e in self._extra] #extra is not completely supported, it is printed for possible future support, nothing else
+            
+        }
+        return ret
+
+    @classmethod
+    def from_dict(cls, meta_dict):
+        """
+        Create an instance from a dict containing the information
+        """        
+        ret = cls()
+
+        tmp = meta_dict['tempo']
+        ret._tempo.tick = tmp[0]; ret._tempo.data = tmp[1];
+        
+        ts = meta_dict['time_signature']
+        ret._time_signature.tick = ts[0]; ret._time_signature.data = ts[1];
+        
+        ks = meta_dict['key_signature']
+        ret._key_signature.tick = ret._key_signature.data = ks[1];
+
+        smpte = meta_dict['smpte_offset']
+        ret._smpte_offset.tick = smpte[0]; ret._smpte_offset.data = smpte[1];
+        
+        instr = meta_dict['instrument']
+        ret._instrument.tick = instr[0]; ret._instrument.text = instr[1]; ret._instrument.data = instr[2]; 
+
+        #TODO implement this ... maybe some nice thing that reads text and recreates the events... but this is dangerous for distribution as people can "hack" into the game with modifications to a JSON file
+        #ret._extra = meta_dict['extra']
+
+        return ret
+
 
 class SongInfo(object):
     """
@@ -394,7 +527,7 @@ class SongInfo(object):
     def __init__(self):
         """
         """
-        self._meta = {} 
+        self._meta = SongMetaInfo()
         self._tracks = []
         
     def add_track(self, track, pos=None):
@@ -437,7 +570,7 @@ class SongInfo(object):
         """
         """
         ret = {
-            "meta" : self._meta, #WARNING, this with midi events might not work ... see how to fix this
+            "meta" : self._meta.to_dict(),
             "tracks": [t.to_dict() for t in self._tracks]
         }
         return ret
@@ -449,7 +582,7 @@ class SongInfo(object):
         """        
         ret = cls()
         tracks = [TrackInfo.from_dict(t) for t in song_dict["tracks"]]
-        meta = song_dict["meta"] #WARNING this will not work correctly
+        meta = SongMetaInfo.from_dict(song_dict["meta"])
         ret.add_tracks(tracks)
         ret.meta = meta
         return ret
@@ -489,7 +622,7 @@ class DrillSetInfo(object):
     """
 
     #def __init__(self, name, content, dependencies, measure_ticks=None, metronome_ticks=None, song_info=None)
-    def __init__(self, name, content, dependencies):
+    def __init__(self, name, content, dependencies=[]):
         """
         """
         #intrinsec values, the ones that give identity to this drill set
@@ -504,6 +637,17 @@ class DrillSetInfo(object):
         #self.metronome_ticks = metronome_ticks
         #song information (all the notes and hints
         #self._song_info = song_info
+
+    @staticmethod
+    def flatten_tree(drill_tree):
+        """
+        Flattens a tree giving back an array containing all the elements in the dependencies tree
+        as the dependencies are linked AND also named, the link for the tree is not lost
+        """
+        flat = [drill_tree]
+        for dep in drill_tree._dependencies:
+            flat = flat + DrillSetInfo.flatten_tree(dep)
+        return flat
 
     def to_dict(self):
         """
@@ -535,6 +679,7 @@ class DrillSetInfo(object):
         """
         return from_dict(json.loads(json_str))
 
+
 class PartitionedSongInfo(object):
     """
     Contains the Song and details about the partitions that'll form the levels
@@ -552,33 +697,9 @@ class PartitionedSongInfo(object):
         """
         self._song = None
         self._partitions = []
+        self._partition_tree = {}
         self._measure_ticks = []
         self._metronome_ticks = []
-
-    @staticmethod
-    def tree_trasversal(tree):
-        """
-        ???
-        """
-        #TODO
-        pass
-        
-    @staticmethod
-    def tree_reversal(tree):
-        """
-        Returns the reversed tree, ... TODO
-        """
-        #TODO
-        pass
-        
-    @staticmethod
-    def flatten_tree(object):
-        """
-        Flattens a tree giving back an array, the dependencies are changed for names instead of direct object
-        
-        """
-        #TODO
-        pass
 
     @staticmethod
     #def array_to_tree(arr, measure_ticks, metronome_ticks, song_info):
@@ -652,8 +773,8 @@ class PartitionedSongInfo(object):
         #bpm = song_info.meta['tempo'].bpm
 
         #get tempo signature to know how many beats per measure we'll have
-        time_signature = song_info.meta['time_signature']
-        ppq = song_info.meta['resolution'] # ticks per quarter note
+        time_signature = song_info.meta.time_signature
+        ppq = song_info.meta.resolution # ticks per quarter note
         num = time_signature.numerator
         den = time_signature.denominator
         tpm = ticksPerMeasure(num, den, ppq)
@@ -665,22 +786,52 @@ class PartitionedSongInfo(object):
         measure_ids = range(len(measure_ticks))
         #Generate dependency tree (array_to_tree ...)?
         #partitions = PartitionedSongInfo.array_to_tree(measure_ids, measure_ticks, metronome_ticks, song_info)
-        partitions = PartitionedSongInfo.array_to_tree(measure_ids)
-        
+        partition_tree = PartitionedSongInfo.array_to_tree(measure_ids)
+        partitions = DrillSetInfo.flatten_tree(partition_tree)
         ret = cls()
         ret._song_info = song_info
+        ret._partition_tree = partition_tree
         ret._partitions = partitions
         ret._metronome_ticks = metronome_ticks
         ret._measure_ticks = measure_ticks
         
         return ret
+
+    def to_dict(self):
+        """
+        Note nor tempo nor song information are serialized.
+        This serialization method DOES NOT serialize the DrillSet tree, instead it'll only serialize the drills (partitions)
+        list
+        """
+        ret = {
+            'song_info': self._song_info.to_dict(),
+            #'partition_tree = partition_tree
+            'partitions': [p.to_dict() for p in self._partitions],
+            'metronome_ticks': self._metronome_ticks,
+            'measure_ticks': self._measure_ticks
+        }
         
-    #@classmethod
-    #def notes_partition(cls, song_info)
-    #    """
-    #    """
-    #    #TODO
-    #    pass
+        return ret
+
+    def from_dict(self, data_dict):
+        """
+        """
+        #TODO validte that all the data is correct!!
+        self._song_info = SongInfo.from_dict(data_dict['song_info'])
+        self._partitions = [DrillSetInfo.from_dict(p) for p in data_dict['partitions'] ] 
+        self._metronome_ticks = data_dict['metronome_ticks']
+        self._measure_ticks = data_dict['measure_ticks']
+            
+    def to_JSON(self):
+        """
+        """
+        return json.dumps(self.to_dict())
+
+    def from_JSON(self, json_str):
+        """
+        """
+        return from_dict(json.loads(json_str))
+
 
 
 class MidiInfo(object):
@@ -707,7 +858,7 @@ class MidiInfo(object):
         self.pattern = midi.read_midifile(fname)
         #TODO check that the pattern is valid
         self.info_dict = self.extract_meta(self.pattern[0])
-        self.info_dict["resolution"] = self.get_resolution()
+        self.info_dict.resolution = self.get_resolution()
         
         self.tracks = []
         #make the track analysis
@@ -744,22 +895,8 @@ class MidiInfo(object):
         Extracts meta-information from the meta_track (normally is the first 
         track located, i.e. : the pattern[0] track
         """
-        info = {}
-        info["extra"] = []
-        for e in meta_track:
-            if isinstance(e, midi.TimeSignatureEvent):
-                info["time_signature"] = e
-            elif isinstance(e, midi.KeySignatureEvent):
-                info["key_signature"] = e
-            elif isinstance(e, midi.SetTempoEvent):
-                info["tempo"] = e
-            elif isinstance(e, midi.SmpteOffsetEvent):
-                info["smpte_offset"] = e
-            elif isinstance(e, midi.InstrumentNameEvent):
-                info["instrument"] = e
-            else:
-                info["extra"].append(e)
-        return info        
+        info = SongMetaInfo.from_MIDI_track(meta_track)
+        return info
     
     @staticmethod
     def associate_events(track):
@@ -828,7 +965,7 @@ class MidiInfo(object):
                 hint = ["right","foot",1]
             elif i == 3:
                 hint = ["left","foot",1]
-            track = TrackInfo()            
+            track = TrackInfo()
             #set the hints by default as they come from midi file tracks
             for ae in self.tracks[i]:
                 ae.play_hint = hint
