@@ -746,13 +746,13 @@ class PartitionedSongInfo(object):
         #start is always zero
         #start = 0
         #begin is the beginning of the first note
-        begin = 0
+        begin = -1
         #end is the end of the last note
         end = 0
         for t in song_info.get_tracks():
             for e in t.get_events():
                 tk = e.note_on.tick
-                if tk < begin:
+                if begin<0 or tk < begin:
                     begin = tk
                 tk = e.note_off.tick
                 if tk > end:
@@ -781,7 +781,7 @@ class PartitionedSongInfo(object):
         den = time_signature.denominator
         tpm = ticksPerMeasure(num, den, ppq)
         #generate the metronome beat array 
-        metronome_ticks = range(0, end_tick+1, tpm)
+        metronome_ticks = range(0, end_tick+ppq, ppq)
         #generate the measure marks
         measure_ticks = metronome_ticks[::num]
         #measure ids
@@ -791,7 +791,7 @@ class PartitionedSongInfo(object):
         partition_tree = PartitionedSongInfo.array_to_tree(measure_ids)
         partitions = DrillSetInfo.flatten_tree(partition_tree)
         ret = cls()
-        ret._song_info = song_info
+        ret._song = song_info
         ret._partition_tree = partition_tree
         ret._partitions = partitions
         ret._metronome_ticks = metronome_ticks
@@ -806,7 +806,7 @@ class PartitionedSongInfo(object):
         list
         """
         ret = {
-            'song_info': self._song_info.to_dict(),
+            'song_info': self._song.to_dict(),
             #'partition_tree = partition_tree
             'partitions': [p.to_dict() for p in self._partitions],
             'metronome_ticks': self._metronome_ticks,
@@ -879,8 +879,13 @@ class MidiInfo(object):
         """
         #default values
         ret = (120, 60 * 1000000 / 120)
-        if "tempo" in self.info_dict:
-            ret = (self.info_dict["tempo"].bpm, self.info_dict["tempo"].mpqn)
+        #if "tempo" in self.info_dict:
+        #    ret = (self.info_dict["tempo"].bpm, self.info_dict["tempo"].mpqn)
+        try:
+            ret = self.info_dict.tempo.bpm, self.info_dict.tempo.mpqn
+        except:
+            print "error getting tempo"
+            pass
         return ret
     
     def get_resolution(self):
