@@ -734,13 +734,13 @@ class DrillInfo(object):
         for t in song.get_tracks():
             track = []
             for e in t.get_events():
-                n_on = e.get_note_on()
+                n_on = e.get_note_on().tick
                 if n_on >= drill._tick_begin and n_on < drill._tick_end:
                     track.append(e)
-            self._tracks.append(track)
+            drill._tracks.append(track)
         
-        self.bpm = song.meta.get_tempo().bpm
-        self.resolution = song.meta.resolution
+        drill.bpm = song.meta.get_tempo().bpm
+        drill.resolution = song.meta.resolution
         return drill
         
 class PartitionedSongInfo(object):
