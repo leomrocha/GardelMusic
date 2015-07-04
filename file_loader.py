@@ -250,7 +250,7 @@ class AssociatedEvents(object):
         
         ret.note_on = note_on
         ret.note_off = note_off
-        ret.hint = event_dict["note_off"]["hint"]
+        ret.hint = event_dict["hint"]
         return ret
 
     @classmethod
@@ -356,7 +356,7 @@ class TrackInfo(object):
         """        
         ret = cls()
         #TODO
-        events = [AssociatedEvent.from_dict(e) for e in event_dict["events"]]
+        events = [AssociatedEvents.from_dict(e) for e in event_dict["events"]]
         ret.add_events(events)
         return ret
 
@@ -660,24 +660,26 @@ class DrillSetInfo(object):
         #return {'name':self._name, 'content':self._content, 'deps':[d.to_dict() for d in self._dependencies]} #this does not work either
         return {'name':self._name, 'content':self._content, 'deps':self._deps_ids} #this works but does not go recursive
 
-    def from_dict(self, data_dict):
+    @classmethod
+    def from_dict(cls, data_dict):
         """
         """
         #TODO validte that all the data is correct!!
-        self._name = data_dict['name']
-        self._content = data_dict['content']
-        self._deps_ids = data_dict['deps']
+        ret = cls(data_dict['name'], data_dict['content'])
+        ret._deps_ids = data_dict['deps']
         #self._dependencies = data_dict['...']
+        return ret
         
     def to_JSON(self):
         """
         """
         return json.dumps(self.to_dict())
 
-    def from_JSON(self, json_str):
+    @classmethod
+    def from_JSON(cls, json_str):
         """
         """
-        return from_dict(json.loads(json_str))
+        return cls.from_dict(json.loads(json_str))
 
 
 class PartitionedSongInfo(object):
@@ -813,25 +815,28 @@ class PartitionedSongInfo(object):
         
         return ret
 
-    def from_dict(self, data_dict):
+    @classmethod
+    def from_dict(cls, data_dict):
         """
         """
         #TODO validte that all the data is correct!!
-        self._song_info = SongInfo.from_dict(data_dict['song_info'])
-        self._partitions = [DrillSetInfo.from_dict(p) for p in data_dict['partitions'] ] 
-        self._metronome_ticks = data_dict['metronome_ticks']
-        self._measure_ticks = data_dict['measure_ticks']
-            
+        ret = cls()
+        ret._song = SongInfo.from_dict(data_dict['song_info'])
+        ret._partitions = [DrillSetInfo.from_dict(p) for p in data_dict['partitions'] ] 
+        ret._metronome_ticks = data_dict['metronome_ticks']
+        ret._measure_ticks = data_dict['measure_ticks']
+        return ret
+                    
     def to_JSON(self):
         """
         """
         return json.dumps(self.to_dict())
 
-    def from_JSON(self, json_str):
+    @classmethod
+    def from_JSON(cls, json_str):
         """
         """
-        return from_dict(json.loads(json_str))
-
+        return cls.from_dict(json.loads(json_str))
 
 
 class MidiInfo(object):
