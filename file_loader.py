@@ -504,7 +504,7 @@ class SongMetaInfo(object):
         ret._time_signature.tick = ts[0]; ret._time_signature.data = ts[1];
         
         ks = meta_dict['key_signature']
-        ret._key_signature.tick = ret._key_signature.data = ks[1];
+        ret._key_signature.tick = ks[0]; ret._key_signature.data = ks[1];
 
         smpte = meta_dict['smpte_offset']
         ret._smpte_offset.tick = smpte[0]; ret._smpte_offset.data = smpte[1];
@@ -1031,13 +1031,13 @@ class MidiInfo(object):
         for i in range(len(self.tracks)):
             #assume track number: :0 = right hand; 1 = left hand; 2 = right foot; 3 = left foot
             #assume finger number = 1
-            hint = ["right","hand",1]
+            hint = ["right","hand",-1]
             if i == 1:
-                hint = ["left","hand",1]
+                hint = ["left","hand",-1]
             elif i == 2:
-                hint = ["right","foot",1]
+                hint = ["right","foot",-1]
             elif i == 3:
-                hint = ["left","foot",1]
+                hint = ["left","foot",-1]
             track = TrackInfo()
             #set the hints by default as they come from midi file tracks
             for ae in self.tracks[i]:
@@ -1065,6 +1065,8 @@ def load_midi2partition(fpath):
     song = midi_info.to_song()
     partition = PartitionedSongInfo.measure_partition(song)
     return partition
+
+##load fron name if midi and song available, if not, load mii and convert it to partition too
 
 
 #####
