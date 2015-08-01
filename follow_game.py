@@ -12,17 +12,21 @@ import pygame
 
 import time
 
+from file_loader import is_note_on, is_note_off
+from file_loader import ticks2sec, ticks2ms
+
 
 class FollowGameEngine(object):
     """
     """
-    def __init__(self, midi_pubsub, drill=None, max_lives=3, difficulty=1, use_velocity=False, respect_tempo=False):
+    def __init__(self, midi_pubsub, drill=None, max_lives=3, difficulty=1, use_velocity=False, respect_tempo=False, respect_note_off=False):
         """
         drill: the drill for the game engine to play
         max_lives=3, 
         difficulty=1, delta time tolerance (denominator) multiplication factor (not implemented yet)
         use_velocity=False, if velicity must be corrected or not (not implemented yet)
         respect_tempo=False, if time based correction must happen or not (not implemented yet)
+        respect_note_off=False, if note off events should also be corrected (not implemented yet)
         """
         ############################
         #pubsub for user interaction and music playing
@@ -64,8 +68,9 @@ class FollowGameEngine(object):
         
         #array of arrays containig the events in order, this takes in account the delta tolerance
         self._follow_sequence = []
-        #current notes to be played
-        self._current_notes = []
+        #current notes to be played, pointed by the bucket index
+        #self._current_notes = []
+        self._bucket_index = 0
         
         #history of user input
         self._history = []
@@ -80,21 +85,37 @@ class FollowGameEngine(object):
         """
         """
         self._drill = drill
-        
+        drill.bucketize_events(ignore_note_off=True)
+        #self._buckets = drill.buckets()
+        self._bucket_index = 0
+
+    def toggle(self):
+        """
+        toggles game state between playing and stopped
+        """
+        if self._state == 'stopped':
+            self.start()
+        else:
+            self.stop()
+            
     def start(self):
         """
         
         """
+        print "starting game"
         #TODO
         self._start_time = time.time()
+        self._state = 'showing'
         #TODO start with the drill
         pass
         
     def stop(self):
         """
         """
+        print "stopping game"
         #TODO
         self._stop_time = time.time()
+        self._state = 'stopped'
         pass
         
     def reset(self):
@@ -171,7 +192,7 @@ class FollowGameEngine(object):
         #return
         pass
         
-    def _showing_state(self):
+    def _update_showing_state(self):
         """
         """
         #TODO
@@ -185,6 +206,9 @@ class FollowGameEngine(object):
     def update(self):
         """
         """
+        #TODO
+        if self._state == 'showing':
+            self._update_showing_state()
         #TODO
         pass
         

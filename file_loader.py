@@ -87,7 +87,7 @@ def is_note_on(event):
     checks if is instance of note on event
     shortcut to avoid writing isinstance code
     """
-    ret = isinstance(event, midi.NoteOnEvent)
+    ret = isinstance(event, midi.NoteOnEvent) and event.velocity > 0
     return ret
 
 
@@ -694,11 +694,17 @@ class DrillInfo(object):
         
         """
         self.name = 'drill'
-        self._tracks = {}
         self._metronome_ticks = [] #the metronome ticks that will take place in this drill, also relative to tick begin
         self._measure_ids = [] ##id, the order of the measures to play
         self._measure_ticks = [] ##ticks, the begin ticks of the measures to play
+        #keeps the tracks of associated events
         self._tracks = []
+        #this is a raw list per track of the events, useful for playing and some other game transformations
+        self._events_per_track = []
+        #buckets, useful to separate the track into buckets, each bucket represent a "given bucket resolution" ticks range. 
+        #buckets list does not keep empty bucket elements, only the ones that have content
+        self.buckets = []
+        self._bucket_resolution = 0
         self._tick_begin = 0
         self._tick_end = 0
         self._instrument = "piano"
@@ -712,7 +718,42 @@ class DrillInfo(object):
         #self._content = content
         #self._dependencies = dependencies
         
+    def bucketize_events(self, bucket_resolution=0, ignore_note_off=False):
+        """
+        Separates the events into buckets of resolution = tick_resolution,
+        if none given will default to self.resolution
+        Minimum resolution accepted is 1, any other number will be interpreted as non
+        bucket_resolution=0,  bucket resolution (will default to the current resolution
+        ignore_note_off=False, if note_off events should be ignored in the buckets (many exercises do not need to know about it)
+        """
+        if bucket_resolution <=0:
+            bucket_resolution = self.resolution
+            self._bucket_resolution = bucket_resolution
+
+        #simple algorithm to bucketize a list of midi events
+        #step zero, create empty bucket list
+        tick_range = self._tick_end - self._tick_begin
+        n_buckets = (tick_range / bucket_resolution) + 1
+        t_buckets = [[] for i in range(n_buckets)]
+        #first pass, bucketize
+        for t in self._events_per_track:
+            for e in t:
+                b_id = (e.tick - self._tick_begin) / bucket_resolution
+                #TODO make boolean calculation to simplify the expression if-else
+                #if ignore_note_off and is_note_off(e):
+                #    #ignore
+                #    pass
+                #else:
+                #    t_buckets[b_id].append(e)
+                if is_note_on(e) or not ignore_note_off:
+                    t_buckets[b_id].append(e)
                 
+        self.buckets = t_buckets
+        #second pass: compress buckets, erase empty buckets and save result
+        #TODO before compaction, an ID of the tick (init or end) of each bucket to be able to trace it)
+        #self.buckets = [b for b in t_buckets if len(b)>0]
+
+
     @classmethod
     def create_drill(cls, partition, song, metronome_ticks, measure_ticks, ticks_per_measure):
         """
@@ -730,7 +771,6 @@ class DrillInfo(object):
         drill._tick_begin, drill._tick_end = drill._measure_ticks[0], drill._measure_ticks[-1] + ticks_per_measure
         drill._metronome_ticks = [t for t in metronome_ticks if (t >= drill._tick_begin and t < drill._tick_end)]
         
-        tracks = []
         for t in song.get_tracks():
             track = []
             for e in t.get_events():
@@ -738,6 +778,16 @@ class DrillInfo(object):
                 if n_on >= drill._tick_begin and n_on < drill._tick_end:
                     track.append(e)
             drill._tracks.append(track)
+        
+        #events per track:
+        for t in drill._tracks:
+            #for each associated event
+            track_events = []
+            for ae in t:
+                track_events.extend(ae.data)
+            #sort the events
+            track_events.sort(key=lambda x: x.tick)
+            drill._events_per_track.append(track_events)
         
         drill.bpm = song.meta.get_tempo().bpm
         drill.resolution = song.meta.resolution

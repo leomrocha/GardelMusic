@@ -33,7 +33,8 @@ class FollowGameTest(object):
         #Setup video system with current video settings
         display_info = pygame.display.Info()
         self.scene_width, self.scene_height = display_info.current_w, display_info.current_h
-        self.screen = pygame.display.set_mode((self.scene_width * 8/10, self.scene_height * 8/10))
+        self.screen = pygame.display.set_mode((320, 240))
+        #self.screen = pygame.display.set_mode((self.scene_width * 8/10, self.scene_height * 8/10))
         #self.screen = pygame.display.set_mode((self.scene_width * 5/10, self.scene_height * 5/10))
 
         pygame.display.set_caption("Follow Game Engine Test")
@@ -69,6 +70,7 @@ class FollowGameTest(object):
         """
         Game loop
         """
+        print "press SPACE to start or stop"
         #time = self.clock.tick(100)
         while not self.quit_flag:
             #time = self.clock.tick(200)
@@ -81,12 +83,10 @@ class FollowGameTest(object):
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
 			            self.quit()
+                    elif event.key == pygame.K_SPACE:
+                        self._game.toggle()
 	            #scene event handling (has to be here because loop over events empties the queue
                 self._game.on_event(event)
-
-            #Process  MIDI events
-            if self.midi_active:
-                self.midi_pubsub
 
             #            
             self._game.update()
