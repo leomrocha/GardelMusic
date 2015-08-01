@@ -72,7 +72,7 @@ class MIDIPubSub(object):
         """
         #WARNING for the moment is only nte_on and note_off and goes to the output
         vel = int(velocity * self.volume)
-        #print "publishing event: ", midi_event, midi_id, vel
+        print "publishing event: ", midi_event, midi_id, vel
         try:
             if midi_event == 'note_on':
                 self.midi_out.note_on(midi_id, vel)

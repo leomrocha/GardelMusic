@@ -55,7 +55,22 @@ def ticks2sec(ticks, BPM, resolution):
     #return ticks2ms(ticks, BPM, resolution) / 1000. ## ===
     #return (60. / BPM)/resolution ## ===
     return  ticks * 60. / (BPM * resolution)
+    
 
+
+def ms2ticks(sec, BPM, resolution):
+    """
+    ticks
+    """
+    return int((sec * BPM * resolution) / 60000 )
+
+
+def sec2ticks(sec, BPM, resolution):
+    """
+    ticks
+    """
+    return int((sec * BPM * resolution) / 60)
+    
 
 def ticksPerMeasure(numerator, denominator, resolution):
     """
@@ -704,6 +719,7 @@ class DrillInfo(object):
         #buckets, useful to separate the track into buckets, each bucket represent a "given bucket resolution" ticks range. 
         #buckets list does not keep empty bucket elements, only the ones that have content
         self.buckets = []
+        self.midi_buckets = []
         self._bucket_resolution = 0
         self._tick_begin = 0
         self._tick_end = 0
@@ -717,8 +733,32 @@ class DrillInfo(object):
         #self._name = name
         #self._content = content
         #self._dependencies = dependencies
+
+    def bucketize_events(self, bucket_resolution=0):
+        """
+        Separates the events into buckets of resolution = tick_resolution,
+        if none given will default to self.resolution
+        Minimum resolution accepted is 1, any other number will be interpreted as non
+        bucket_resolution=0,  bucket resolution (will default to the current resolution
+        """
+        if bucket_resolution <=0:
+            bucket_resolution = self.resolution
+            self._bucket_resolution = bucket_resolution
+
+        #simple algorithm to bucketize a list of midi events
+        #step zero, create empty bucket list
+        tick_range = self._tick_end - self._tick_begin
+        n_buckets = (tick_range / bucket_resolution) + 1
+        t_buckets = [[] for i in range(n_buckets)]
+        #first pass, bucketize
+        for t in self._tracks:
+            for ae in t:
+                noe = ae.data[0]
+                b_id = (noe.tick - self._tick_begin) / bucket_resolution
+                t_buckets[b_id].append(ae)
+        self.buckets = t_buckets
         
-    def bucketize_events(self, bucket_resolution=0, ignore_note_off=False):
+    def bucketize_midi_events(self, bucket_resolution=0, ignore_note_off=False):
         """
         Separates the events into buckets of resolution = tick_resolution,
         if none given will default to self.resolution
@@ -748,7 +788,7 @@ class DrillInfo(object):
                 if is_note_on(e) or not ignore_note_off:
                     t_buckets[b_id].append(e)
                 
-        self.buckets = t_buckets
+        self.midi_buckets = t_buckets
         #second pass: compress buckets, erase empty buckets and save result
         #TODO before compaction, an ID of the tick (init or end) of each bucket to be able to trace it)
         #self.buckets = [b for b in t_buckets if len(b)>0]
