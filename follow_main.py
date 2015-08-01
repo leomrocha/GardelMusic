@@ -49,7 +49,8 @@ class FollowGameTest(object):
         self._partitions = load_file(fpath, fname)
         
         #create drill (hardcoded for the moment)
-        partition = self._partitions._partitions[10]
+        partition = self._partitions._partitions[17]
+        print "partition = ", partition.to_dict()
         song = self._partitions._song
         metronome_ticks = self._partitions._metronome_ticks
         measure_ticks = self._partitions._measure_ticks
@@ -57,7 +58,7 @@ class FollowGameTest(object):
         
         drill = DrillInfo.create_drill(partition, song, metronome_ticks, measure_ticks, ticks_per_measure)
         
-        self._game = FollowGameEngine(self.midi_pubsub, drill, max_lives=9999999)
+        self._game = FollowGameEngine(self.midi_pubsub, drill, max_lives=3)
         
     def setup_midi(self):
         """
