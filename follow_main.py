@@ -88,7 +88,9 @@ class FollowGameTest(object):
 	            #scene event handling (has to be here because loop over events empties the queue
                 self._game.on_event(event)
 
-            #            
+            #
+            self.midi_pubsub.poll()
+            
             self._game.update()
             self._game.draw()
             

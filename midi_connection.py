@@ -72,7 +72,7 @@ class MIDIPubSub(object):
         """
         #WARNING for the moment is only nte_on and note_off and goes to the output
         vel = int(velocity * self.volume)
-        print "publishing event: ", midi_event, midi_id, vel
+        #print "publishing event: ", midi_event, midi_id, vel
         try:
             if midi_event == 'note_on':
                 self.midi_out.note_on(midi_id, vel)
@@ -121,6 +121,7 @@ class MIDIPubSub(object):
                 #print "full midi_events " + str(midi_events)
                     #print "my midi note is " + str(midi_events[0][0][1])
                 # convert them into pygame events.
+                #TODO FIXME change the pygame event for a python_midi event conversion here
                 midi_evs = pygame.midi.midis2events(midi_events, self.midi_in.device_id)
                 
                 self.process_events(midi_evs)

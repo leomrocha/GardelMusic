@@ -74,7 +74,9 @@ class FollowGameEngine(object):
         self._playing_events = []
         #list of events to play (buffer, will get empty)
         self._events2play = []
-        
+        #the reverted events2play (copied in new lists) for being able to correct the user as a queue
+        #and without empty elements
+        self._stage_events = []
         #array of arrays containig the events in order, this takes in account the delta tolerance
         # and is ordered in buckets
         self._follow_sequence = []
@@ -83,12 +85,15 @@ class FollowGameEngine(object):
         
         #history of user input
         self._history = []
-        
+        #user current active notes
+        self._user_notes_on = []
+        #user_playing
+        self._user_playing = True
         
         ############################
         #register function callbacks
         self.midi_pubsub.subscribe('note_on', self.on_note_on)
-        #self.midi_pubsub.subscribe('note_off', self.on_note_off)
+        self.midi_pubsub.subscribe('note_off', self.on_note_off)
         
     def set_drill(self, drill):
         """
@@ -151,15 +156,17 @@ class FollowGameEngine(object):
             self.midi_pubsub.publish('note_off', note_off.pitch)
 
         self._playing = False
-        self._state = 'stopped' # ['stopped', 'showing', 'waiting']
+        #self._state = 'stopped' # ['stopped', 'showing', 'waiting']
         self._wait_timeout = 0
         self._current_timeout_left = 0
         self._total_timeout = 0 
         self._current_time = 0
+        self._begin_time = time.time()
         self._begin_tick = self._drill._tick_begin
         self._current_tick = self._drill._tick_begin
         self._playing_events = []
         self._events2play = []
+        self._stage_events = []
         self._follow_sequence = []
         
     def _set_next_stage(self):
@@ -169,23 +176,31 @@ class FollowGameEngine(object):
         it will setup the set of elements to play,
         cleanup
         """
+        self._reset_stage()
         #search next index with data and set the current bucket index
         i = self._bucket_index
         buckets = self._drill.buckets
+        #print "buckets = ", buckets
         buckets_len = len(buckets)
         while True:
             i+=1
-            if buckets_len>=i or len(buckets[i]) > 0 :
+            if buckets_len>=i and len(buckets[i]) > 0 :
                 self._bucket_index=i
                 break
         if buckets_len>=i:
             print "Drill finished, no more to do"
             self.on_finish()
         #load all the buckets to play here
-        self._events2play = buckets[:self._bucket_index+1]
-        #TODO set current max tick time
+        #MUST make a copy of each internal array of the buckets or it will be erased later
+        self._events2play = [b[:] for b in buckets[:self._bucket_index+1]]
+        self._stage_events = [b[:] for b in buckets[:self._bucket_index+1] if len(b) > 0]
+        self._stage_events.reverse()
+        #?? set current max tick time
         #self._max_tick = (self._bucket_index+1) * self._drill._bucket_resolution
-        print "self._events2play = ", self._events2play
+        #print "self._events2play = ", self._events2play
+        # Try this .. 
+        #self._state == 'showing'
+        #self._begin_time = time.time()
         
     def on_finish(self):
         """
@@ -202,6 +217,13 @@ class FollowGameEngine(object):
         """
         #TODO
         pass
+        
+    def _on_stage_finish(self):
+        """
+        """
+        self._set_next_stage()
+        self._state = 'showing'
+        self._begin_time = time.time()
         
     def on_lose(self):
         """
@@ -225,27 +247,70 @@ class FollowGameEngine(object):
         #else:
         #   end exercise and present results
         pass
-        
-    def on_correct_event(event, expected):
+
+    def _evaluate_event(self, event):
         """
+        checks that the input event was an expected, 
+        returns True if is correct, False if it is not
         """
         #TODO
-        pass
+        self._playing_events = []
+        print "self._stage_events ", self._stage_events
+        if len(self._stage_events):
+            bucket = self._stage_events[-1]
+            correct = False
+            t_event = None
+            for ae in bucket:
+                print event
+                #WARNING both types of events are different, left one is pygame and right one is an abstraction over python_midi
+                #TODO FIXME those events should be the same type
+                if event.data1 == ae.get_pitch():
+                    t_event = ae
+                    correct = True
+                    break
+            if t_event is not None:
+                bucket.remove(t_event)
+            #if mistake or bucket now is empty, pop and go to next bucket (this bucket failed already)
+            if not correct or len(bucket) == 0:
+                self._stage_events.pop()
+            return correct
+        #if len(self._stage_events) <= 0:
+        #    print "sequence completed, congratulations!"
+        #    #go to next stage
+        #    self._on_stage_finish()
         
     def on_note_on(self, event):
         """
         """
+        print "note on event = ", event
         #TODO
         #evaluate if the note is correct (WARNING this might get difficult with chords or parallel rythms)
         #if so, on note correct
         #else on mistake
-        #
-        pass
+        #append event to user history
+        self._history.append(event) ##FIXME WARNING this event should be a python_midi event not a pygame event
+        self._playing_events.append(event) ##FIXME WARNING this event should be a python_midi event not a pygame event
+        evaluation = self._evaluate_event(event)
+        print "evaluation = ", evaluation, event
+        #correct
+
         
     def on_note_off(self, event):
         """
         """
+        #Clear out the event from the playing events
+        ev = None
+        for e in self._playing_events:
+            if event.data1 == e.data1:  ##FIXME WARNING this events should be python_midi events not a pygame event
+                ev = e
+        if ev is not None:
+            self._playing_events.remove(ev)
+        
         #TODO
+        if len(self._stage_events) <= 0 and len(self._playing_events) <= 0:
+            print "sequence completed, congratulations!"
+            #go to next stage
+            self._on_stage_finish()
         pass
         
     def _update_waiting_state(self):
@@ -269,13 +334,14 @@ class FollowGameEngine(object):
         #increment time counter
         self._current_time = curr_time = time.time() - self._begin_time
         self._current_tick = curr_tick = sec2ticks(curr_time, self._drill.bpm, self._drill.resolution) + self._drill._tick_begin #(tick begin is because ticks are relative to this point)
-        print curr_time, curr_tick
+        #print curr_time, curr_tick
         #See if any note has to be turned off
         buff_erase = [] #temp buffer because we can't erase elements from an iterator, it will break it
         for ae in self._playing_events:
-            print "playing events: ", self._playing_events
+            #print "playing events: ", self._playing_events
             enoff = ae.data[1] #note off
             if enoff.tick <= curr_tick:
+                print "playing note off: ", enoff, curr_time, curr_tick
                 self.midi_pubsub.publish('note_off', enoff.pitch, 0)
                 buff_erase.append(ae)
             
@@ -283,15 +349,16 @@ class FollowGameEngine(object):
             self._playing_events.remove(e)
         #see if any note has to be turned on            
         for bucket in self._events2play:
-            print "events to play = ", bucket
+            #print "events to play = ", bucket
             #TODO limit to the max current bucket, to do this use curr_time and curr_tick and bucket resolution (for performance on long drills)
             buff_erase = []
             for ae in bucket:
-                print "lala, ae", ae
+                #print "lala, ae", ae
                 enon = ae.data[0] #note on
-                print enon, enon.tick
+                #print enon, enon.tick
 
                 if enon.tick <= curr_tick:
+                    print "playing note on: ", enon, curr_time, curr_tick
                     self.midi_pubsub.publish('note_on', enon.pitch, enon.velocity)
                     #add to playing events
                     self._playing_events.append(ae)
@@ -327,4 +394,12 @@ class FollowGameEngine(object):
         """
         """
         #TODO
+        
+        ############temp logic to see if playing works
+        
+        if self._state == 'waiting':
+            self._set_next_stage()
+            self._state = 'showing'
+            self._begin_time = time.time()
+        ##################
         pass
