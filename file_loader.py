@@ -1066,6 +1066,36 @@ def load_midi2partition(fpath):
     partition = PartitionedSongInfo.measure_partition(song)
     return partition
 
+def load_partition(fpath):
+    """
+    fpath is the file name with the path all together
+    """
+    f = open(fpath)
+    json_str = f.read()
+    f.close()
+    parts = PartitionedSongInfo.from_JSON(json_str)
+    return parts
+    
+def load_file(fpath, fname):
+    """
+    Loads a file without extension, will try to find the .parts file if not will look for a mid or midi file and transform it
+    fpath = path for the file
+    fname = name of the file without the extension
+    """
+    #TODO look into the folder for the filename
+    if os.path.exists(fpath):
+        #find files with the given name:
+        files = [i for i in os.listdir(fpath) if i.find(fname) >=0]
+        #find if there is a parts file
+        for i in files:
+            if i.find('parts') >=0:
+                parts = load_partition(os.path.join(fpath, i))
+                return parts
+        #else find if there are mid or midi files
+        for i in files:
+            if i.find('mid') >=0 or i.find('midi') >=0:
+                parts = load_midi2partition(os.path.join(fpath, i))
+                return parts
 ##load fron name if midi and song available, if not, load mii and convert it to partition too
 
 

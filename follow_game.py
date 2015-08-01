@@ -16,27 +16,62 @@ import time
 class FollowGameEngine(object):
     """
     """
-    def __init__(self, midi_pubsub, drill=None, max_lives=3):
+    def __init__(self, midi_pubsub, drill=None, max_lives=3, difficulty=1, use_velocity=False, respect_tempo=False):
         """
         drill: the drill for the game engine to play
+        max_lives=3, 
+        difficulty=1, delta time tolerance (denominator) multiplication factor (not implemented yet)
+        use_velocity=False, if velicity must be corrected or not (not implemented yet)
+        respect_tempo=False, if time based correction must happen or not (not implemented yet)
         """
+        ############################
         #pubsub for user interaction and music playing
         self.midi_pubsub = midi_pubsub
         #drill that will be presented to the player
-        self._drill = drill
+        self._drill = None
+        self.set_drill(drill)
         
+        #multiplication factor for the delta tolerance on time issues
+        #self._difficulty = difficulty  #TODO
+        #self._user_velocity = use_velocity  #TODO
+        #self._respect_time = respect_time  #TODO
+        
+        ############################
         #game stats
         self._max_lives = max_lives
         self._current_lives = max_lives
         self._current_points = 0
+        
+        
+        ############################
+        #game state:
+        ######
+        #time state
         self._play_time = 0
         self._start_time = 0
         self._stop_time = 0
-        
-        #game state:
-        
+        #playing ?
         self._playing = False
-        self.
+        #the state represents what the user or game are doing
+        self._state = 'stopped' # ['stopped', 'showing', 'waiting']
+        #wait timeout is the time the game will wait without user input
+        self._wait_timeout = 0
+        self._current_timeout_left = 0
+        #total timeout is the max time for the particular sub-drill (the sequence to follow at the moment)
+        # this time is the total time the user has to fulfill the current 
+        self._total_timeout = 0 
+        self._current_time = 0
+        
+        #array of arrays containig the events in order, this takes in account the delta tolerance
+        self._follow_sequence = []
+        #current notes to be played
+        self._current_notes = []
+        
+        #history of user input
+        self._history = []
+        
+        
+        ############################
         #register function callbacks
         self.midi_pubsub.subscribe('note_on', self.on_note_on)
         #self.midi_pubsub.subscribe('note_off', self.on_note_off)
@@ -69,6 +104,24 @@ class FollowGameEngine(object):
         self._current_lives = self._max_lives
         self._current_points = 0
         self._play_time = 0
+        
+    def on_win(self):
+        """
+        Congratulates the user
+        Presents the user with the statistics
+        Presents the chance to go on
+        """
+        #TODO
+        pass
+        
+    def on_lose(self):
+        """
+        Pity the user
+        Present the user the statistics
+        Present the user the chance to redo the level
+        """
+        #TODO
+        pass
         
     def on_mistake(self, event, expected):
         """
@@ -106,4 +159,43 @@ class FollowGameEngine(object):
         #TODO
         pass
         
-    
+    def _update_waiting_state(self):
+        """
+        """
+        #TODO
+        #increment time counter
+        #decrement from timeout left
+        #if timeout:
+        #lose life
+        #pass to showing state
+        #return
+        pass
+        
+    def _showing_state(self):
+        """
+        """
+        #TODO
+        #increment time counter
+        #increment pointer
+        #if a sound has to be started
+        #    send midi signal
+        #   push to stack of notes active (track for any stop case)
+        #if a sound has to be stopped, send midi signal
+        
+    def update(self):
+        """
+        """
+        #TODO
+        pass
+        
+    def draw(self, screen=None):
+        """
+        """
+        #TODO
+        pass
+        
+    def on_event(self, event):
+        """
+        """
+        #TODO
+        pass

@@ -71,7 +71,6 @@ class Director:
 
         pygame.display.set_caption("Piano Challenge")
 
-        clock = pygame.time.Clock() # create a clock object for timing
         self.start_scene = start_scene
         self.scene = None
         self.quit_flag = False
@@ -143,13 +142,14 @@ class Director:
 
                         
             #Process  MIDI events
-            if self.midi_active:
-                self.midi_pubsub
+            #TODO
+            #if self.midi_active:
+            #    self.midi_pubsub
 
-            # actualiza la escena
+            # update scene
             self.scene.on_update()
 
-            # dibuja la pantalla
+            # update screen
             #self.scene.on_draw(self.screen)
             self.scene.on_draw()
             
