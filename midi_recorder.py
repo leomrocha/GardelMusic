@@ -35,15 +35,18 @@ class SimpleMIDIRecorder(object):
         self.bpm = bpm  #TODO unduplicate it. This information is in the SongMetaInfo (or should be)
         self.resolution = resolution
 
+
+
         #current state
         self._recording = False
+        self.start_on_event = False #if the recording should start when a midi event arrives
         self._init_time = 0
         self._current_time = 0
         self._end_time = 0
         
-        self._in_progress = in_progress = [None for i in range(128)]
+        self._in_progress = [None for i in range(128)]
         self._record = [] #(AssociatedEvents list, needs to be ordered before returning it
-        self._event_history = []
+        #self._event_history = []
         ############################
         #register function callbacks
         self.midi_pubsub.subscribe('note_on', self.on_note_on)
@@ -56,16 +59,14 @@ class SimpleMIDIRecorder(object):
         self._current_time = 0
         self._end_time = 0
         self._recording = False
-        self._in_progress = in_progress = [None for i in range(128)]
+        self._in_progress = [None for i in range(128)]
         self._record = []
         self._event_history = []
 
     def record(self):
         """
         """
-        self._init_time = time.time()
-        self._current_time = 0
-        self._end_time = 0
+        self._reset() 
         self._recording = True
         
     def stop(self):
@@ -81,11 +82,18 @@ class SimpleMIDIRecorder(object):
     def on_note_on(self, event):
         """
         """
+        
+        if not self._recording:
+            if not self.start_on_event:
+                return
+            self._recording = True
+
         self._current_time = time.time() - self._init_time
         curr_tick = sec2ticks(self._current_time, self.bpm, self.resolution)
         #IMPORTANT translate from pygame event to python_midi event
         event = pygame_event2python_midi(event)
-        self._event_history.append(event)
+        print event
+        #self._event_history.append(event)
         #add the note on event to the current playing events
         if self._in_progress[event.pitch] is not None:
             print "Double NoteOnEvent without NoteOffEvent: %s .discarding old event.", %str(self._in_progress[event.pitch].note_on, event)
@@ -96,15 +104,18 @@ class SimpleMIDIRecorder(object):
         ae.note_on.tick = curr_tick
         self._in_progress[event.pitch] = ae
 
-        
     def on_note_off(self, event):
         """
         """
+        if not self._recording:
+            return
+            
         self._current_time = time.time() - self._init_time
         curr_tick = sec2ticks(self._current_time, self.bpm, self.resolution)
         #translate from pygame event to python_midi event
         event = pygame_event2python_midi(event)
-        self._event_history.append(event)
+        print event
+        #self._event_history.append(event)
         #search for the pairing event
         if self._in_progress[event.pitch] is None:
             print "NoteOffEvent without previous NoteOnEvent: ", event
