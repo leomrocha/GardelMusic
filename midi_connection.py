@@ -131,7 +131,7 @@ class MIDIPubSub(object):
             #the only thing is that the pedal always sends max volume
             #the pedal sends 4 signals with status == 176,177,178,179 with velocity 127 to pedal on and velocity 0 pedal off
             ###
-            elif e.status == 176:
+            elif e.status == 176:  #0xB0 -> control change event ... need to see the code inside the status is not enough
                 #print e
                 subs = self.sustain_subs
             #call all the subscribers
