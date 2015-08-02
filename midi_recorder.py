@@ -12,11 +12,13 @@ import pygame
 
 import time
 
-from file_loader import is_note_on, is_note_off
-from file_loader import ticks2sec, ticks2ms
-from file_loader import sec2ticks, ms2ticks
-from file_loader import SongMetaInfo # for meta information on the song
-from file_loader import MidiInfo  # for associating events after the recording ... needed ??
+#from file_loader import is_note_on, is_note_off
+#from file_loader import ticks2sec, ticks2ms
+#from file_loader import sec2ticks, ms2ticks
+#from file_loader import SongMetaInfo # for meta information on the song
+#from file_loader import MidiInfo  # for associating events after the recording ... needed ??
+
+from file_loader import *
 from midi_connection import pygame_event2python_midi
 
 
@@ -29,7 +31,7 @@ class SimpleMIDIRecorder(object):
         """
         midi_pubsub: the midi pubsub object
         """
-        self._midi_pubsub = midi_pubsub
+        self.midi_pubsub = midi_pubsub
         
         self._meta = SongMetaInfo()
         self.bpm = bpm  #TODO unduplicate it. This information is in the SongMetaInfo (or should be)
@@ -66,7 +68,7 @@ class SimpleMIDIRecorder(object):
     def record(self):
         """
         """
-        self._reset() 
+        self.reset() 
         self._recording = True
         
     def stop(self):
@@ -77,7 +79,7 @@ class SimpleMIDIRecorder(object):
         self._end_time = time.time()
         #sort events
         self._record.sort(key=lambda x: x.get_init_tick())
-        return (self._metea, self._record)
+        return (self._meta, self._record)
         
     def on_note_on(self, event):
         """
@@ -86,7 +88,7 @@ class SimpleMIDIRecorder(object):
         if not self._recording:
             if not self.start_on_event:
                 return
-            self._recording = True
+            self.record()
 
         self._current_time = time.time() - self._init_time
         curr_tick = sec2ticks(self._current_time, self.bpm, self.resolution)
@@ -96,7 +98,7 @@ class SimpleMIDIRecorder(object):
         #self._event_history.append(event)
         #add the note on event to the current playing events
         if self._in_progress[event.pitch] is not None:
-            print "Double NoteOnEvent without NoteOffEvent: %s .discarding old event.", %str(self._in_progress[event.pitch].note_on, event)
+            print "Double NoteOnEvent without NoteOffEvent: %s .discarding old event %s." %(self._in_progress[event.pitch].note_on, event)
         #create new association and leave it incomplete
         ae = AssociatedEvents()
         ae.note_on = event
@@ -128,3 +130,14 @@ class SimpleMIDIRecorder(object):
                 self._in_progress[event.pitch] = None
             except Exception as e:
                 print e
+    
+    def on_event(self, event):
+        """
+        """
+        pass
+        
+    def update(self):
+        """
+        """
+        self._current_time = time.time()
+        pass

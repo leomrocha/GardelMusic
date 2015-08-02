@@ -10,7 +10,7 @@ import pygame.midi
 import pygame.fastevent
 
 #follow game
-from follow_game import FollowGameEngine
+from midi_recorder import SimpleMIDIRecorder
 
 #file loading:
 from file_loader import *
@@ -31,6 +31,7 @@ class SimpleRecorder(object):
         """
         self._fname=fname
         self._fpath=fpath
+
         #Setup video system with current video settings
         display_info = pygame.display.Info()
         self.scene_width, self.scene_height = display_info.current_w, display_info.current_h
@@ -39,6 +40,11 @@ class SimpleRecorder(object):
         #self.screen = pygame.display.set_mode((self.scene_width * 5/10, self.scene_height * 5/10))
 
         pygame.display.set_caption("SimpleMIDIRecorder")
+        self.scene = None
+        self.quit_flag = False
+        self.clock = pygame.time.Clock()
+
+
 
         self.setup_midi()
         self._recorder = SimpleMIDIRecorder(self.midi_pubsub,bpm=60,resolution=220)
@@ -75,7 +81,7 @@ class SimpleRecorder(object):
                             print "############################################"
                             print "recording = "
                             print rec[0].to_dict(), 
-                            print [ae.to_dict() for ar in rec[1]]
+                            print [ae.to_dict() for ae in rec[1]]
                             #TODO should write a file
                         else:
                             #start recording
@@ -132,7 +138,7 @@ def process_event(event):
     pass
     
 def main():
-    game = FollowGameTest()
+    game = SimpleRecorder()
     
     #dir.change_scene_by_name("home_scene"), not needed now that the scenes are managed by name and there is an initial scene
     game.loop()
