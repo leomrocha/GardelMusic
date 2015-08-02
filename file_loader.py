@@ -128,7 +128,7 @@ class AssociatedEvents(object):
         # play_hint  = [hand/foot, "right/left", finger id if needed or None]
         #TODO this is useful for piano and drums, extend for guitar and other instruments later
         #TODO hand = h, foot = f, left = l, right = r
-        self.__play_hint = ["hand", "right", 1]
+        self.__play_hint = ["hand", "right", -1]
         
     def get_note_on(self):
         return self.data[0]
@@ -249,6 +249,7 @@ class AssociatedEvents(object):
         """
         Create an instance from a dict containing the information
         """        
+        #print "decoding event dict: ", event_dict
         ret = cls()
         note_on = midi.events.NoteOnEvent()
         note_on.tick = event_dict["note_on"]["tick"]
@@ -265,7 +266,8 @@ class AssociatedEvents(object):
         
         ret.note_on = note_on
         ret.note_off = note_off
-        ret.hint = event_dict["hint"]
+        ret.play_hint = event_dict["hint"]
+        #print 'hint = ', event_dict["hint"]
         return ret
 
     @classmethod
@@ -372,6 +374,7 @@ class TrackInfo(object):
         ret = cls()
         #TODO
         events = [AssociatedEvents.from_dict(e) for e in event_dict["events"]]
+        #print '\n'.join([e.to_JSON() for e in events])
         ret.add_events(events)
         return ret
 
@@ -380,7 +383,7 @@ class TrackInfo(object):
         """
         Load
         """
-        data_dict = json.loads(json_string)
+        data_dict = json.load(json_string)
         ret = cls.from_dict(data_dict)
         return ret
 
@@ -616,7 +619,8 @@ class SongInfo(object):
         """
         Load
         """
-        data_dict = json.loads(fpath)
+        #TODO FIXME this will not work
+        data_dict = json.load(fpath)
         ret = cls.from_dict(data_dict)
         return ret
 
@@ -1160,6 +1164,7 @@ def load_partition(fpath):
     """
     fpath is the file name with the path all together
     """
+    #print "loading partition: ", fpath
     f = open(fpath)
     json_str = f.read()
     f.close()
@@ -1178,12 +1183,12 @@ def load_file(fpath, fname):
         files = [i for i in os.listdir(fpath) if i.find(fname) >=0]
         #find if there is a parts file
         for i in files:
-            if i.find('parts') >=0:
+            if i.find('.parts') >=0:
                 parts = load_partition(os.path.join(fpath, i))
                 return parts
         #else find if there are mid or midi files
         for i in files:
-            if i.find('mid') >=0 or i.find('midi') >=0:
+            if i.find('.mid') >=0 or i.find('.midi') >=0:
                 parts = load_midi2partition(os.path.join(fpath, i))
                 return parts
 ##load fron name if midi and song available, if not, load mii and convert it to partition too
