@@ -15,6 +15,8 @@ import time
 from file_loader import is_note_on, is_note_off
 from file_loader import ticks2sec, ticks2ms
 from file_loader import sec2ticks, ms2ticks
+from midi_connection import pygame_event2python_midi
+
 
 class FollowGameEngine(object):
     """
@@ -155,8 +157,7 @@ class FollowGameEngine(object):
         then resets all the stage variables
         """
         for e in self._playing_events:
-            ##note_off = ae.data[1] ##TODO FIXME WARNING!!! pygame event instead of AggregatedEvents
-            self.midi_pubsub.publish('note_off', e.data1) ##TODO FIXME WARNING!!! pygame event instead of AggregatedEvents
+            self.midi_pubsub.publish('note_off', e.pitch)
 
         self._playing = False
         #self._state = 'stopped' # ['stopped', 'showing', 'waiting']
@@ -295,10 +296,8 @@ class FollowGameEngine(object):
             t_event = None
             for ae in bucket:
                 #print event
-                #WARNING both types of events are different, left one is pygame and right one is an abstraction over python_midi
-                #TODO FIXME those events should be the same type
-                print ae.get_pitch(), event.data1
-                if event.data1 == ae.get_pitch():
+                print ae.get_pitch(), event.pitch
+                if event.pitch == ae.get_pitch():
                     t_event = ae
                     correct = True
                     break
@@ -314,14 +313,16 @@ class FollowGameEngine(object):
         """
         if not self._state == 'waiting':
             return
+        #IMPORTANT translate from pygame event to python_midi event
+        event = pygame_event2python_midi(event)
         print "note on: ", event
         #TODO
         #evaluate if the note is correct (WARNING this might get difficult with chords or parallel rythms)
         #if so, on note correct
         #else on mistake
         #append event to user history
-        self._history.append(event) ##FIXME WARNING this event should be a python_midi event not a pygame event
-        self._playing_events.append(event) ##FIXME WARNING this event should be a python_midi event not a pygame event
+        self._history.append(event) 
+        self._playing_events.append(event)
         #print "playing events note ON: ", self._playing_events
         evaluation = self._evaluate_event(event)
         if evaluation:
@@ -337,11 +338,13 @@ class FollowGameEngine(object):
         """
         if not self._state == 'waiting':
             return
+        #translate from pygame event to python_midi event
+        event = pygame_event2python_midi(event)
         print "note off: ", event
         #Clear out the event from the playing events
         ev = None
         for e in self._playing_events:
-            if event.data1 == e.data1:  ##FIXME WARNING this events should be python_midi events not a pygame event
+            if event.pitch == e.pitch:
                 ev = e
                 break
         if ev is not None:

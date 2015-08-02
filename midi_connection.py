@@ -2,6 +2,30 @@
 import pygame
 import pygame.midi
 
+import midi
+
+def pygame_event2python_midi(event):
+    """
+    Transforms a Pygame Midi Event to a python_midi event.
+    This should be later completed and replace directly from midi input event to python midi event and
+    bypass the midis2events of pygame.
+    For the moment this only transforms NoteOn and NoteOff events, TODO the others
+    """
+    ret = event
+    if event.status == 144:
+        ret = midi.events.NoteOnEvent()
+        ret.tick =  event.timestamp ##UNKNOWN, here I can put a timestamp, but nothing else
+        ret.pitch = event.data1
+        ret.velocity = event.data2
+        ret.channel = event.data3
+    elif event.status == 128:
+        ret = midi.events.NoteOffEvent()
+        ret.tick =  event.timestamp ##UNKNOWN, here I can put a timestamp, but nothing else
+        ret.pitch = event.data1
+        ret.velocity = event.data2
+        ret.channel = event.data3
+
+    return ret
 
 class MIDIPubSub(object):
     """
