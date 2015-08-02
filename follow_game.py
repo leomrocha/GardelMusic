@@ -121,14 +121,14 @@ class FollowGameEngine(object):
         
         """
         print "starting game"
-        #TODO
+        #reset everything:
+        self.reset()
+        #
+        self._set_next_stage()
         self._begin_time = time.time()
-        self._begin_time
         self._state = 'showing'
         
         self._bucket_index = -1
-        
-        self._set_next_stage()
         
     def stop(self):
         """
@@ -164,6 +164,7 @@ class FollowGameEngine(object):
         self._current_timeout_left = 0
         self._total_timeout = 0 
         self._current_time = 0
+        self._max_streak = 0
         self._begin_time = time.time()
         self._begin_tick = self._drill._tick_begin
         self._current_tick = self._drill._tick_begin
@@ -334,9 +335,9 @@ class FollowGameEngine(object):
     def on_note_off(self, event):
         """
         """
-        print "note off: ", event
         if not self._state == 'waiting':
             return
+        print "note off: ", event
         #Clear out the event from the playing events
         ev = None
         for e in self._playing_events:
