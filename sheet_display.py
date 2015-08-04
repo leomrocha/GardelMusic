@@ -404,7 +404,7 @@ class PlayerSheetDisplay(object):
     def _set_dial(self):
         """
         """
-        pos = (self.pos[0] + self.size[0] * self.LEFT_OVERLAY_PROPORTION, self.pos[1])
+        pos = (self.pos[0] + self.size[0] * self.LEFT_OVERLAY_PROPORTION - 1, self.pos[1])
         size = (2,self.size[1])
         self.dial = DialSprite(pos=pos, size=size)
         self.dial_group.add(self.dial)        

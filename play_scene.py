@@ -90,7 +90,8 @@ class PlayScene(object):
         
         ###test file names:
         #fname = "assets/midi/yiruma-river_flows_in_you.mid"
-        fname="assets/midi/mary.mid"
+        #fname="assets/midi/mary.mid"
+        fname="examples/Gardel_PorUnaCabeza.midi"
         #load midi, this is a test, should be done somehow by the parent
         self.load_midi(fname)
         
