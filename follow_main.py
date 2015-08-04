@@ -29,7 +29,8 @@ class FollowGameTest(object):
     def __init__(self, fpath=os.path.join("assets","midi") , fname="mary"):
         """
         """
-        self._fname=fname
+        fpath = 'examples'
+        fname = 'Gardel_PorUnaCabeza'
         #Setup video system with current video settings
         display_info = pygame.display.Info()
         self.scene_width, self.scene_height = display_info.current_w, display_info.current_h
